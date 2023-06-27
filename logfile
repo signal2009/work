@@ -1,0 +1,41 @@
+ask         : Command line
+Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+Version      : 2.178.0
+Author       : Microsoft Corporation
+Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+==============================================================================
+Generating script.
+Script contents:
+powershell "$randomNumber=Get-Random;[Net.ServicePointManager]::SecurityProtocol = 'tls12'; irm https://detect.synopsys.com/detect7.ps1?$randomNumber | iex; detect" --blackduck.api.token=*** --blackduck.url="https://fis2.app.blackduck.com" --blackduck.proxy.host="proxy.nonprod.nb01.local" --blackduck.proxy.port=8080 --detect.project.name=TriposCloud_20000187 --detect.project.version.name=125324 --detect.report.timeout=900 --detect.timeout=900 --detect.source.path='D:\azdev\bld01\_work\19\a\applicationpackage'  --detect.detector.search.exclusion='Resources' --detect.blackduck.signature.scanner.paths='D:\azdev\bld01\_work\19\a\applicationpackage' --logging.level.com.synopsys.integration=DEBUG
+========================== Starting Command Output ===========================
+"C:\Windows\system32\cmd.exe" /D /E:ON /V:OFF /S /C "CALL "D:\azdev\bld01\_work\_temp\b9664dc4-f5ba-4864-b031-e064d89bf9a5.cmd""
+Detect Powershell Script 2.5.1
+Checking if Java is installed by asking for version.
+Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
+Java Standard Output: 
+Java Error Output: java version "1.8.0_333"
+Java(TM) SE Runtime Environment (build 1.8.0_333-b02)
+Java HotSpot(TM) 64-Bit Server VM (build 25.333-b02, mixed mode)
+
+Successfully able to start java and get version.
+Initializing Detect folder.
+Using system temp folder: C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp
+Checking for proxy.
+Found proxy host.
+Found proxy port.
+No proxy credentials found.
+Proxy has been configured.
+Getting Detect.
+Finding latest Detect version.
+Using Detect source https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-detect/7.14.0/synopsys-detect-7.14.0.jar
+Detect jar exists 'True'
+You have already downloaded the latest file, so the local file will be used.
+Executing Detect.
+Running Detect: "-jar" "C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp/synopsys-detect-7.14.0.jar" "--blackduck.api.token=***" "--blackduck.url=https://fis2.app.blackduck.com" "--blackduck.proxy.host=proxy.nonprod.nb01.local" "--blackduck.proxy.port=8080" "--detect.project.name=TriposCloud_20000187" "--detect.project.version.name=125324" "--detect.report.timeout=900" "--detect.timeout=900" "--detect.source.path=D:\azdev\bld01\_work\19\a\applicationpackage" "--detect.detector.search.exclusion=Resources" "--detect.blackduck.signature.scanner.paths=D:\azdev\bld01\_work\19\a\applicationpackage" "--logging.level.com.synopsys.integration=DEBUG"
+Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
+______     _            _
+|  _  \   | |          | |
+| | | |___| |_ ___  ___| |_
+| | | / _ \ __/ _ \/ __| __|
+| |/ /  __/ ||  __/ (__| |_
+|___/ \___|\__\___|\___|\__|
