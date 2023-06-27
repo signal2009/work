@@ -1,41 +1,244 @@
-ask         : Command line
-Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
-Version      : 2.178.0
-Author       : Microsoft Corporation
-Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
-==============================================================================
-Generating script.
-Script contents:
-powershell "$randomNumber=Get-Random;[Net.ServicePointManager]::SecurityProtocol = 'tls12'; irm https://detect.synopsys.com/detect7.ps1?$randomNumber | iex; detect" --blackduck.api.token=*** --blackduck.url="https://fis2.app.blackduck.com" --blackduck.proxy.host="proxy.nonprod.nb01.local" --blackduck.proxy.port=8080 --detect.project.name=TriposCloud_20000187 --detect.project.version.name=125324 --detect.report.timeout=900 --detect.timeout=900 --detect.source.path='D:\azdev\bld01\_work\19\a\applicationpackage'  --detect.detector.search.exclusion='Resources' --detect.blackduck.signature.scanner.paths='D:\azdev\bld01\_work\19\a\applicationpackage' --logging.level.com.synopsys.integration=DEBUG
-========================== Starting Command Output ===========================
-"C:\Windows\system32\cmd.exe" /D /E:ON /V:OFF /S /C "CALL "D:\azdev\bld01\_work\_temp\b9664dc4-f5ba-4864-b031-e064d89bf9a5.cmd""
-Detect Powershell Script 2.5.1
-Checking if Java is installed by asking for version.
-Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
-Java Standard Output: 
-Java Error Output: java version "1.8.0_333"
-Java(TM) SE Runtime Environment (build 1.8.0_333-b02)
-Java HotSpot(TM) 64-Bit Server VM (build 25.333-b02, mixed mode)
-
-Successfully able to start java and get version.
-Initializing Detect folder.
-Using system temp folder: C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp
-Checking for proxy.
-Found proxy host.
-Found proxy port.
-No proxy credentials found.
-Proxy has been configured.
-Getting Detect.
-Finding latest Detect version.
-Using Detect source https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-detect/7.14.0/synopsys-detect-7.14.0.jar
-Detect jar exists 'True'
-You have already downloaded the latest file, so the local file will be used.
-Executing Detect.
-Running Detect: "-jar" "C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp/synopsys-detect-7.14.0.jar" "--blackduck.api.token=***" "--blackduck.url=https://fis2.app.blackduck.com" "--blackduck.proxy.host=proxy.nonprod.nb01.local" "--blackduck.proxy.port=8080" "--detect.project.name=TriposCloud_20000187" "--detect.project.version.name=125324" "--detect.report.timeout=900" "--detect.timeout=900" "--detect.source.path=D:\azdev\bld01\_work\19\a\applicationpackage" "--detect.detector.search.exclusion=Resources" "--detect.blackduck.signature.scanner.paths=D:\azdev\bld01\_work\19\a\applicationpackage" "--logging.level.com.synopsys.integration=DEBUG"
-Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
-______     _            _
-|  _  \   | |          | |
-| | | |___| |_ ___  ___| |_
-| | | / _ \ __/ _ \/ __| __|
-| |/ /  __/ ||  __/ (__| |_
-|___/ \___|\__\___|\___|\__|
+2023-06-27T08:26:38.5697327Z ##[section]Starting: Run blackduck scan for scheduled builds
+2023-06-27T08:26:38.6362625Z ==============================================================================
+2023-06-27T08:26:38.6363132Z Task         : Command line
+2023-06-27T08:26:38.6363528Z Description  : Run a command line script using Bash on Linux and macOS and cmd.exe on Windows
+2023-06-27T08:26:38.6363958Z Version      : 2.178.0
+2023-06-27T08:26:38.6364216Z Author       : Microsoft Corporation
+2023-06-27T08:26:38.6364648Z Help         : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/command-line
+2023-06-27T08:26:38.6365259Z ==============================================================================
+2023-06-27T08:26:41.5818912Z Generating script.
+2023-06-27T08:26:41.5928580Z Script contents:
+2023-06-27T08:26:41.5942396Z powershell "$randomNumber=Get-Random;[Net.ServicePointManager]::SecurityProtocol = 'tls12'; irm https://detect.synopsys.com/detect7.ps1?$randomNumber | iex; detect" --blackduck.api.token=*** --blackduck.url="https://fis2.app.blackduck.com" --blackduck.proxy.host="proxy.nonprod.nb01.local" --blackduck.proxy.port=8080 --detect.project.name=TriposCloud_20000187 --detect.project.version.name=125324 --detect.report.timeout=900 --detect.timeout=900 --detect.source.path='D:\azdev\bld01\_work\19\a\applicationpackage'  --detect.detector.search.exclusion='Resources' --detect.blackduck.signature.scanner.paths='D:\azdev\bld01\_work\19\a\applicationpackage' --logging.level.com.synopsys.integration=DEBUG
+2023-06-27T08:26:41.6305213Z ========================== Starting Command Output ===========================
+2023-06-27T08:26:41.6549288Z ##[command]"C:\Windows\system32\cmd.exe" /D /E:ON /V:OFF /S /C "CALL "D:\azdev\bld01\_work\_temp\b9664dc4-f5ba-4864-b031-e064d89bf9a5.cmd""
+2023-06-27T08:26:44.8896630Z Detect Powershell Script 2.5.1
+2023-06-27T08:26:44.8970498Z Checking if Java is installed by asking for version.
+2023-06-27T08:26:44.9149756Z Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
+2023-06-27T08:26:45.2968279Z Java Standard Output: 
+2023-06-27T08:26:45.2978251Z Java Error Output: java version "1.8.0_333"
+2023-06-27T08:26:45.2978993Z Java(TM) SE Runtime Environment (build 1.8.0_333-b02)
+2023-06-27T08:26:45.2979924Z Java HotSpot(TM) 64-Bit Server VM (build 25.333-b02, mixed mode)
+2023-06-27T08:26:45.2980337Z 
+2023-06-27T08:26:45.2992496Z Successfully able to start java and get version.
+2023-06-27T08:26:45.3022778Z Initializing Detect folder.
+2023-06-27T08:26:45.3044406Z Using system temp folder: C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp
+2023-06-27T08:26:45.3093881Z Checking for proxy.
+2023-06-27T08:26:45.3238031Z Found proxy host.
+2023-06-27T08:26:45.3283827Z Found proxy port.
+2023-06-27T08:26:45.3373636Z No proxy credentials found.
+2023-06-27T08:26:45.3383449Z Proxy has been configured.
+2023-06-27T08:26:45.3426824Z Getting Detect.
+2023-06-27T08:26:45.3507583Z Finding latest Detect version.
+2023-06-27T08:26:46.2684830Z Using Detect source https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-detect/7.14.0/synopsys-detect-7.14.0.jar
+2023-06-27T08:26:46.2846698Z Detect jar exists 'True'
+2023-06-27T08:26:46.2856742Z You have already downloaded the latest file, so the local file will be used.
+2023-06-27T08:26:46.2867241Z Executing Detect.
+2023-06-27T08:26:46.2999696Z Running Detect: "-jar" "C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp/synopsys-detect-7.14.0.jar" "--blackduck.api.token=***" "--blackduck.url=https://fis2.app.blackduck.com" "--blackduck.proxy.host=proxy.nonprod.nb01.local" "--blackduck.proxy.port=8080" "--detect.project.name=TriposCloud_20000187" "--detect.project.version.name=125324" "--detect.report.timeout=900" "--detect.timeout=900" "--detect.source.path=D:\azdev\bld01\_work\19\a\applicationpackage" "--detect.detector.search.exclusion=Resources" "--detect.blackduck.signature.scanner.paths=D:\azdev\bld01\_work\19\a\applicationpackage" "--logging.level.com.synopsys.integration=DEBUG"
+2023-06-27T08:26:46.3009104Z Java Source: JAVA_HOME/bin/java=C:\Program Files\Java\jre1.8.0_333/bin/java
+2023-06-27T08:26:47.8452417Z ______     _            _
+2023-06-27T08:26:47.8452937Z |  _  \   | |          | |
+2023-06-27T08:26:47.8453269Z | | | |___| |_ ___  ___| |_
+2023-06-27T08:26:47.8453629Z | | | / _ \ __/ _ \/ __| __|
+2023-06-27T08:26:47.8454106Z | |/ /  __/ ||  __/ (__| |_
+2023-06-27T08:26:47.8454451Z |___/ \___|\__\___|\___|\__|
+2023-06-27T08:26:47.8454629Z 
+2023-06-27T08:26:48.0589214Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Initializing detect.
+2023-06-27T08:26:48.1257307Z 2023-06-27 04:26:48 EDT DEBUG [main] --- You seem to be running in a WINDOWS operating system.
+2023-06-27T08:26:48.1272195Z 2023-06-27 04:26:48 EDT DEBUG [main] --- You seem to be using amd64, AMD64 architecture.
+2023-06-27T08:26:48.1277565Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Detect boot begin.
+2023-06-27T08:26:48.1407346Z 
+2023-06-27T08:26:48.1408298Z Detect Version: 7.14.0
+2023-06-27T08:26:48.1408466Z 
+2023-06-27T08:26:48.2161291Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Configuration processed completely.
+2023-06-27T08:26:48.2257235Z 2023-06-27 04:26:48 EDT INFO  [main] --- 
+2023-06-27T08:26:48.2258317Z 2023-06-27 04:26:48 EDT INFO  [main] --- Current property values:
+2023-06-27T08:26:48.2263864Z 2023-06-27 04:26:48 EDT INFO  [main] --- --property = value [notes]
+2023-06-27T08:26:48.2264553Z 2023-06-27 04:26:48 EDT INFO  [main] --- ------------------------------------------------------------
+2023-06-27T08:26:48.2274116Z 2023-06-27 04:26:48 EDT INFO  [main] --- blackduck.api.token = **************************************************************************************************** [cmd] 
+2023-06-27T08:26:48.2275110Z 2023-06-27 04:26:48 EDT INFO  [main] --- blackduck.proxy.host = proxy.nonprod.nb01.local [cmd] 
+2023-06-27T08:26:48.2275904Z 2023-06-27 04:26:48 EDT INFO  [main] --- blackduck.proxy.port = 8080 [cmd] 
+2023-06-27T08:26:48.2276568Z 2023-06-27 04:26:48 EDT INFO  [main] --- blackduck.url = https://fis2.app.blackduck.com [cmd] 
+2023-06-27T08:26:48.2277374Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.blackduck.signature.scanner.paths = D:\azdev\bld01\_work\19\a\applicationpackage [cmd] 
+2023-06-27T08:26:48.2278232Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.phone.home.passthrough.powershell.version = 2.5.1 [env] 
+2023-06-27T08:26:48.2278969Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.project.name = TriposCloud_20000187 [cmd] 
+2023-06-27T08:26:48.2279638Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.project.version.name = 125324 [cmd] 
+2023-06-27T08:26:48.2280355Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.source.path = D:\azdev\bld01\_work\19\a\applicationpackage [cmd] 
+2023-06-27T08:26:48.2281036Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.timeout = 900 [cmd] 
+2023-06-27T08:26:48.2281855Z 2023-06-27 04:26:48 EDT INFO  [main] --- detect.wait.for.results = true [env] 
+2023-06-27T08:26:48.2282529Z 2023-06-27 04:26:48 EDT INFO  [main] --- logging.level.com.synopsys.integration = DEBUG [cmd] 
+2023-06-27T08:26:48.2283257Z 2023-06-27 04:26:48 EDT INFO  [main] --- ------------------------------------------------------------
+2023-06-27T08:26:48.2283846Z 2023-06-27 04:26:48 EDT INFO  [main] --- 
+2023-06-27T08:26:48.2299773Z 2023-06-27 04:26:48 EDT INFO  [main] --- Detect build date: 2022-06-23
+2023-06-27T08:26:48.2300727Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Initializing Detect.
+2023-06-27T08:26:48.3577161Z 2023-06-27 04:26:48 EDT INFO  [main] --- Source directory: D:\azdev\bld01\_work\19\a\applicationpackage
+2023-06-27T08:26:48.3578563Z 2023-06-27 04:26:48 EDT INFO  [main] --- Output directory: C:\Windows\ServiceProfiles\NetworkService\blackduck
+2023-06-27T08:26:48.3599351Z 2023-06-27 04:26:48 EDT INFO  [main] --- Run directory: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058
+2023-06-27T08:26:48.3789064Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Main boot completed. Deciding what Detect should do.
+2023-06-27T08:26:48.3789834Z 2023-06-27 04:26:48 EDT INFO  [main] --- 
+2023-06-27T08:26:48.6684002Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Black Duck will run ONLINE: A Black Duck url was found.
+2023-06-27T08:26:48.6729875Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Decided what products will be run. Starting product boot.
+2023-06-27T08:26:48.6765104Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Detect product boot start.
+2023-06-27T08:26:48.6765822Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Will boot Black Duck product.
+2023-06-27T08:26:48.6906343Z 2023-06-27 04:26:48 EDT DEBUG [main] --- Detect will check communication with the Black Duck server.
+2023-06-27T08:26:53.0609141Z 2023-06-27 04:26:53 EDT INFO  [main] --- Successfully connected to Black Duck (version 2023.4.0)!
+2023-06-27T08:26:53.7945565Z 2023-06-27 04:26:53 EDT DEBUG [main] --- Connected as: SVCACCT_AZDO_BD
+2023-06-27T08:26:58.3128866Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Roles: Project Viewer, Project Code Scanner
+2023-06-27T08:26:58.5933929Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Group: service accounts
+2023-06-27T08:26:58.8188984Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Detect product boot completed.
+2023-06-27T08:26:58.8253219Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Detect boot completed.
+2023-06-27T08:26:58.8256711Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Detect will attempt to run.
+2023-06-27T08:26:58.8337876Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Guessed Detect jar location as C:\Windows\SERVIC~1\NETWOR~1\AppData\Local\Temp/synopsys-detect-7.14.0.jar
+2023-06-27T08:26:58.8339043Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Checking for jar file: C:\Windows\ServiceProfiles\NetworkService\AppData\Local\Temp\synopsys-detect-7.14.0.jar
+2023-06-27T08:26:58.8339928Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Found detect jar file.
+2023-06-27T08:26:58.8720049Z 2023-06-27 04:26:58 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:26:58.8720871Z 2023-06-27 04:26:58 EDT INFO  [main] --- Will include the Docker tool.
+2023-06-27T08:26:58.8813196Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Was not applicable.
+2023-06-27T08:26:58.8816918Z 2023-06-27 04:26:58 EDT INFO  [main] --- Docker actions finished.
+2023-06-27T08:26:58.8832977Z 2023-06-27 04:26:58 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:26:58.8833767Z 2023-06-27 04:26:58 EDT INFO  [main] --- Will include the Bazel tool.
+2023-06-27T08:26:58.8879915Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Was not applicable.
+2023-06-27T08:26:58.8880573Z 2023-06-27 04:26:58 EDT INFO  [main] --- Bazel actions finished.
+2023-06-27T08:26:58.8884610Z 2023-06-27 04:26:58 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:26:58.8885265Z 2023-06-27 04:26:58 EDT INFO  [main] --- Will include the Detectors tool.
+2023-06-27T08:26:58.9238024Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Initializing detector system.
+2023-06-27T08:26:58.9238773Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Starting detector file system traversal.
+2023-06-27T08:26:58.9239447Z 2023-06-27 04:26:58 EDT INFO  [main] --- Searching for detectors. This may take awhile.
+2023-06-27T08:26:58.9244157Z 2023-06-27 04:26:58 EDT ERROR [main] --- The source directory could not be searched for detectors - detector tool failed.
+2023-06-27T08:26:58.9245013Z 2023-06-27 04:26:58 EDT ERROR [main] --- Please ensure the provided source path is a directory and detect has access.
+2023-06-27T08:26:58.9253600Z 2023-06-27 04:26:58 EDT INFO  [main] --- Detectors actions finished.
+2023-06-27T08:26:58.9262251Z 2023-06-27 04:26:58 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:26:58.9263376Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Completed code location tools.
+2023-06-27T08:26:58.9264053Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Determining project info.
+2023-06-27T08:26:58.9278361Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Using the first ordered tool with project info: DETECTOR
+2023-06-27T08:26:58.9286147Z 2023-06-27 04:26:58 EDT INFO  [main] --- Project name: TriposCloud_20000187
+2023-06-27T08:26:58.9291295Z 2023-06-27 04:26:58 EDT INFO  [main] --- Project version: 125324
+2023-06-27T08:26:58.9306112Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Creating BDIO code locations.
+2023-06-27T08:26:58.9312796Z 2023-06-27 04:26:58 EDT DEBUG [main] --- Creating BDIO files from code locations.
+2023-06-27T08:26:58.9672241Z 2023-06-27 04:26:58 EDT DEBUG [main] --- No clone project or version name supplied. Will not clone.
+2023-06-27T08:26:58.9676516Z 2023-06-27 04:26:58 EDT DEBUG [main] --- No project group was supplied. Will not assign a project group.
+2023-06-27T08:26:58.9682893Z 2023-06-27 04:26:58 EDT DEBUG [main] --- No project version licenses were supplied.  Will not update licenses.
+2023-06-27T08:26:59.6760335Z 2023-06-27 04:26:59 EDT INFO  [main] --- The 125324 version was not found, so it will be created under the TriposCloud_20000187 project.
+2023-06-27T08:27:01.1386343Z 2023-06-27 04:27:01 EDT DEBUG [main] --- No 'Application ID' to set.
+2023-06-27T08:27:01.1682857Z 2023-06-27 04:27:01 EDT DEBUG [main] --- No custom fields to set.
+2023-06-27T08:27:01.1717243Z 2023-06-27 04:27:01 EDT DEBUG [main] --- Will not unmap code locations: Project view was not present, or should not unmap code locations.
+2023-06-27T08:27:01.1718560Z 2023-06-27 04:27:01 EDT DEBUG [main] --- Completed project and version actions.
+2023-06-27T08:27:01.1723837Z 2023-06-27 04:27:01 EDT DEBUG [main] --- Processing Detect Code Locations.
+2023-06-27T08:27:01.6846005Z 2023-06-27 04:27:01 EDT INFO  [main] --- Starting the codelocation file uploads.
+2023-06-27T08:27:01.6883247Z 2023-06-27 04:27:01 EDT INFO  [main] --- Completed the codelocation file uploads.
+2023-06-27T08:27:01.6908754Z 2023-06-27 04:27:01 EDT DEBUG [main] --- Completed Detect Code Location processing.
+2023-06-27T08:27:01.6918064Z 2023-06-27 04:27:01 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:27:01.6918801Z 2023-06-27 04:27:01 EDT INFO  [main] --- Will include the Signature Scanner tool.
+2023-06-27T08:27:01.6958394Z 2023-06-27 04:27:01 EDT DEBUG [main] --- Signature scanner will use the Black Duck server to download/update the scanner - this is the most likely situation.
+2023-06-27T08:27:01.7094965Z 2023-06-27 04:27:01 EDT INFO  [main] --- Registering explicit scan path D:\azdev\bld01\_work\19\a\applicationpackage
+2023-06-27T08:27:02.2209381Z 2023-06-27 04:27:02 EDT DEBUG [main] --- The directory structure was likely created by the installer
+2023-06-27T08:27:04.5969895Z 2023-06-27 04:27:04 EDT DEBUG [main] --- Locally installed signature scanner version: 2023.4.0
+2023-06-27T08:27:04.5971228Z 2023-06-27 04:27:04 EDT DEBUG [main] --- The Black Duck Signature Scanner version matches the connected Black Duck version - skipping download.
+2023-06-27T08:27:04.5972309Z 2023-06-27 04:27:04 EDT INFO  [main] --- The Black Duck Signature Scanner downloaded/found successfully: C:\Windows\ServiceProfiles\NetworkService\blackduck\tools
+2023-06-27T08:27:04.6223547Z 2023-06-27 04:27:04 EDT INFO  [main] --- Starting the Black Duck Signature Scan commands.
+2023-06-27T08:27:04.6359883Z 2023-06-27 04:27:04 EDT DEBUG [pool-3-thread-1] --- The directory structure was likely created by the installer
+2023-06-27T08:27:04.6389698Z 2023-06-27 04:27:04 EDT DEBUG [pool-3-thread-1] --- Using this java installation : C:\Windows\ServiceProfiles\NetworkService\blackduck\tools\Black_Duck_Scan_Installation\scan.cli-2023.4.0\jre\bin\java.exe
+2023-06-27T08:27:04.6391623Z 2023-06-27 04:27:04 EDT DEBUG [pool-3-thread-1] --- Using the Black Duck hostname : 'fis2.app.blackduck.com'
+2023-06-27T08:27:04.6424997Z 2023-06-27 04:27:04 EDT INFO  [pool-3-thread-1] --- Black Duck CLI command: C:\Windows\ServiceProfiles\NetworkService\blackduck\tools\Black_Duck_Scan_Installation\scan.cli-2023.4.0\jre\bin\java.exe -Done-jar.silent=true -Done-jar.jar.path=C:\Windows\ServiceProfiles\NetworkService\blackduck\tools\Black_Duck_Scan_Installation\scan.cli-2023.4.0\lib\cache\scan.cli.impl-standalone.jar -Dhttp.proxyHost=proxy.nonprod.nb01.local -Dhttp.proxyPort=8080 -Dhttp.proxyUser=user ***************************** -Xmx4096m -jar C:\Windows\ServiceProfiles\NetworkService\blackduck\tools\Black_Duck_Scan_Installation\scan.cli-2023.4.0\lib\scan.cli-2023.4.0-standalone.jar --no-prompt --scheme https --host fis2.app.blackduck.com --port 443 -v --logDir C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1 --statusWriteDir C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1 --project TriposCloud_20000187 --release 125324 --name applicationpackage/TriposCloud_20000187/125324 scan D:\azdev\bld01\_work\19\a\applicationpackage
+2023-06-27T08:27:06.9635191Z 2023-06-27 04:27:06 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Start wrapper: ScanCliWrapperSettings [commandLine=[args=[Ljava.lang.String;@4a891c97, options=[Lorg.apache.commons.cli.Option;@a5bd950], fileUriSet=null, scheme=https, host=fis2.app.blackduck.com, port=443]...
+2023-06-27T08:27:08.4560904Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Start scan loop: ScanClientSettings [commandLine=[--no-prompt, --scheme, https, --host, fis2.app.blackduck.com, --port, 443, -v, --logDir, C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, --statusWriteDir, C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, --project, TriposCloud_20000187, --release, 125324, --name, applicationpackage/TriposCloud_20000187/125324 scan, D:\azdev\bld01\_work\19\a\applicationpackage], fileUriSet=[file:/D:/azdev/bld01/_work/19/a/applicationpackage], dryRunWriteDir=No dry run file., outputFormat=null, scanId=null, dryRunReadFile=No dry run file., fsScanReadyWaitingPeriod=30, snippetMatching=false, snippetMatchingOnly=false, snippetMatchingAllSource=false, fullSnippetScan=false, uploadSource=false, individualFileMatching=none, licenseSearch=false, copyrightSearch=false, signatureGeneration=false, noSignatureGeneration=false, maxRequestBodySize=20000000, maxUpdateSize=10000, matchConfidenceThreshold=null, minScanInterval=null, logDir=C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, scheme=https, host=fis2.app.blackduck.com, port=443, name=Optional[applicationpackage/TriposCloud_20000187/125324 scan], project=Optional[TriposCloud_20000187], release=Optional[125324], username=null, password=<NOT SHOWN>, correlationId=null, noPersistence=false, noPersistenceMode=null, retainUnmatchedFiles=null]...
+2023-06-27T08:27:08.4641502Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Individual File Matching Detected: none...
+2023-06-27T08:27:08.4735629Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Finalized sha1 white list: []...
+2023-06-27T08:27:08.4939424Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Finalized clean sha1 white list: []...
+2023-06-27T08:27:08.5181962Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Initialize client for fis2.app.blackduck.com:443
+2023-06-27T08:27:08.5434077Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = {scanId}, URI = https://fis2.app.blackduck.com:443/api/v1/scans
+2023-06-27T08:27:08.5816147Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = {scanId}, URI = https://fis2.app.blackduck.com:443/api/scan-summaries
+2023-06-27T08:27:08.6067307Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/codelocations?q=name:{name}&limit={limit}&offset={offset}&includeErrors=true
+2023-06-27T08:27:08.6332301Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = {scanId}, URI = https://fis2.app.blackduck.com:443/api/v1/scanstatus
+2023-06-27T08:27:08.6772855Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/v1/scans/signatureVersion
+2023-06-27T08:27:08.7038477Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/scans/{scanId}/scan-candidates?scanCandidatesParam={scanCandidatesParam}&limit={limit}&offset={offset}
+2023-06-27T08:27:08.7372341Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/fp-import/scans/{scanId}
+2023-06-27T08:27:08.7633504Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/projects?q=name:{projname}&limit={limit}&offset={offset}
+2023-06-27T08:27:08.7878219Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/scan-sources/{sha1}
+2023-06-27T08:27:08.8178541Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/bulk-sources
+2023-06-27T08:27:08.8496984Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/scans/{scanId}/uploaded-file-data
+2023-06-27T08:27:08.8794037Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/scans/{scanId}/string-search-matches
+2023-06-27T08:27:08.9052003Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/scans/{scanId}/string-search
+2023-06-27T08:27:08.9339014Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/license-vsls
+2023-06-27T08:27:08.9605083Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/internal/license-family-vsls
+2023-06-27T08:27:08.9931411Z 2023-06-27 04:27:08 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = null, URI = https://fis2.app.blackduck.com:443/api/settings/analysis
+2023-06-27T08:27:09.0190129Z 2023-06-27 04:27:09 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = {scanId}, URI = https://fis2.app.blackduck.com:443/api/intelligent-persistence-scans
+2023-06-27T08:27:09.0239659Z 2023-06-27 04:27:09 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: RestResourceClient created. SingleRelativePath = {scanId}, URI = https://fis2.app.blackduck.com:443/api/developer-scans
+2023-06-27T08:27:09.1947939Z 2023-06-27 04:27:09 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Scan engine initialized with niceness set to false
+2023-06-27T08:27:09.7248046Z 2023-06-27 04:27:09 EDT ERROR [pool-3-thread-1-Stream Redirect Thread] --- ERROR: The scan target '/D:/azdev/bld01/_work/19/a/applicationpackage' does not exist, you must specify an existing file or directory to scan.
+2023-06-27T08:27:09.7497561Z 2023-06-27 04:27:09 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: ScanExecResult: ScanExecResult [scanClientSettings=ScanClientSettings [commandLine=[--no-prompt, --scheme, https, --host, fis2.app.blackduck.com, --port, 443, -v, --logDir, C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, --statusWriteDir, C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, --project, TriposCloud_20000187, --release, 125324, --name, applicationpackage/TriposCloud_20000187/125324 scan, D:\azdev\bld01\_work\19\a\applicationpackage], fileUriSet=[file:/D:/azdev/bld01/_work/19/a/applicationpackage], dryRunWriteDir=No dry run file., outputFormat=null, scanId=null, dryRunReadFile=No dry run file., fsScanReadyWaitingPeriod=30, snippetMatching=false, snippetMatchingOnly=false, snippetMatchingAllSource=false, fullSnippetScan=false, uploadSource=false, individualFileMatching=none, licenseSearch=false, copyrightSearch=false, signatureGeneration=false, noSignatureGeneration=false, maxRequestBodySize=20000000, maxUpdateSize=10000, matchConfidenceThreshold=null, minScanInterval=null, logDir=C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1, scheme=https, host=fis2.app.blackduck.com, port=443, name=Optional[applicationpackage/TriposCloud_20000187/125324 scan], project=Optional[TriposCloud_20000187], release=Optional[125324], username=null, password=<NOT SHOWN>, correlationId=null, noPersistence=false, noPersistenceMode=null, retainUnmatchedFiles=null], result=66, dataFileName=null, scanContainer=null, sigGenScanContainer=SigGenScanContainerView{baseDir=/D:/azdev/bld01/_work/19/a/applicationpackage, hostName=NWGR2NDOTBLD003, name=applicationpackage/TriposCloud_20000187/125324 scan, scannerVersion=2023.4.0, signatureVersion=7.0.0, ownerEntityKeyToken=SN#NWGR2NDOTBLD003-applicationpackage, createdOn=2023-06-27T08:27:09.085Z, timeToScan=null, scanNodeList.size()=0, scanLeafList.size()=0, scanProblem=ScanProblem{childProblem=false, scanError=com.blackducksoftware.scan.api.ScanError@5934ca1e, problem=Problem{exceptionType=java.nio.file.NoSuchFileException, message=D:\azdev\bld01\_work\19\a\applicationpackage, stack=java.nio.file.NoSuchFileException: D:\azdev\bld01\_work\19\a\applicationpackage..., errorTime=1687854429158}}, scanProblemList.size()=0}, fpScanContainer=null, stringSearchScanContainer=null, scanResult=null, scanSummary=null, scanDate=Tue Jun 27 04:27:08 EDT 2023, scanEndDate=Tue Jun 27 04:27:09 EDT 2023, scanCreated=false]
+2023-06-27T08:27:09.9140797Z 2023-06-27 04:27:09 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Creating data output file: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1\log\NWGR2NDOTBLD003-applicationpackage-2023-06-27T082709.085Z.log
+2023-06-27T08:27:10.0295686Z 2023-06-27 04:27:10 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Logging to file: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1\log\NWGR2NDOTBLD003-applicationpackage-2023-06-27T082709.085Z.log
+2023-06-27T08:27:10.0297429Z Logging to file: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1\log\NWGR2NDOTBLD003-applicationpackage-2023-06-27T082709.085Z.log
+2023-06-27T08:27:10.0724061Z 2023-06-27 04:27:10 EDT DEBUG [pool-3-thread-1-Stream Redirect Thread] --- INFO: Persist scan output to file...
+2023-06-27T08:27:10.0729459Z 2023-06-27 04:27:10 EDT DEBUG [pool-3-thread-1] --- INFO: Persisted status: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1\output\scanOutput.json
+2023-06-27T08:27:10.0731048Z 2023-06-27 04:27:10 EDT INFO  [pool-3-thread-1] --- 
+2023-06-27T08:27:10.0735029Z 2023-06-27 04:27:10 EDT INFO  [pool-3-thread-1] --- Black Duck Signature Scanner return code: 66
+2023-06-27T08:27:10.0736072Z 2023-06-27 04:27:10 EDT INFO  [pool-3-thread-1] --- You can view the logs at: 'C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan\BlackDuckScanOutput\2023-06-27_08-27-04-596_1'
+2023-06-27T08:27:10.0761652Z 2023-06-27 04:27:10 EDT INFO  [main] --- Completed the Black Duck Signature Scan commands.
+2023-06-27T08:27:10.0822557Z 2023-06-27 04:27:10 EDT ERROR [main] --- Scanning target D:\azdev\bld01\_work\19\a\applicationpackage failed: The scan failed with return code: 66
+2023-06-27T08:27:10.0836462Z 2023-06-27 04:27:10 EDT ERROR [main] --- The Signature Scanner encountered an error (66). Please refer to Black Duck documentation or contact support.
+2023-06-27T08:27:10.0864818Z 2023-06-27 04:27:10 EDT INFO  [main] --- Signature Scanner actions finished.
+2023-06-27T08:27:10.0868581Z 2023-06-27 04:27:10 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:27:10.0869278Z 2023-06-27 04:27:10 EDT INFO  [main] --- Will include the Binary Scanner tool.
+2023-06-27T08:27:10.0881082Z 2023-06-27 04:27:10 EDT INFO  [main] --- Binary scanner found nothing to upload.
+2023-06-27T08:27:10.0882927Z 2023-06-27 04:27:10 EDT INFO  [main] --- Binary Scanner actions finished.
+2023-06-27T08:27:10.0893391Z 2023-06-27 04:27:10 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:27:10.0894070Z 2023-06-27 04:27:10 EDT INFO  [main] --- Vulnerability Impact Analysis tool will not be run.
+2023-06-27T08:27:10.0896308Z 2023-06-27 04:27:10 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:27:10.0896940Z 2023-06-27 04:27:10 EDT INFO  [main] --- IaC Scanner tool will not be run.
+2023-06-27T08:27:10.0899100Z 2023-06-27 04:27:10 EDT INFO  [main] --- ----------------------------------
+2023-06-27T08:27:10.0910816Z 2023-06-27 04:27:10 EDT INFO  [main] --- Checking to see if Detect should wait for bom tool calculations to finish.
+2023-06-27T08:27:10.0929507Z 2023-06-27 04:27:10 EDT INFO  [main] --- Checking to see if Detect should check policy for violations.
+2023-06-27T08:27:11.9369094Z 2023-06-27 04:27:11 EDT INFO  [main] --- 
+2023-06-27T08:27:11.9369805Z 2023-06-27 04:27:11 EDT DEBUG [pool-2-thread-1] --- starting phone home
+2023-06-27T08:27:11.9371322Z 2023-06-27 04:27:11 EDT INFO  [main] --- 
+2023-06-27T08:27:11.9396107Z 2023-06-27 04:27:11 EDT DEBUG [pool-2-thread-1] --- Phoning home to https://www.google-analytics.com/collect
+2023-06-27T08:27:11.9400572Z 2023-06-27 04:27:11 EDT INFO  [main] --- Creating status file: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\status\status.json
+2023-06-27T08:27:11.9534765Z 2023-06-27 04:27:11 EDT INFO  [main] --- 
+2023-06-27T08:27:11.9580717Z 2023-06-27 04:27:11 EDT DEBUG [main] --- Detect shutdown begin.
+2023-06-27T08:27:11.9610102Z 2023-06-27 04:27:11 EDT DEBUG [main] --- Detect will cleanup.
+2023-06-27T08:27:11.9610931Z 2023-06-27 04:27:11 EDT DEBUG [main] --- Cleaning up directory: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058
+2023-06-27T08:27:11.9613797Z 2023-06-27 04:27:11 EDT DEBUG [main] --- Cleaning up: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\bdio
+2023-06-27T08:27:11.9728485Z 2023-06-27 04:27:11 EDT DEBUG [main] --- Cleaning up: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\scan
+2023-06-27T08:27:12.0062265Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Cleaning up: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058\status
+2023-06-27T08:27:12.0063412Z 2023-06-27 04:27:12 EDT INFO  [main] --- Status file has been deleted.  To preserve status file, turn off cleanup actions.
+2023-06-27T08:27:12.0143273Z 2023-06-27 04:27:12 EDT INFO  [main] --- Cleaning up directory: C:\Windows\ServiceProfiles\NetworkService\blackduck\runs\2023-06-27-08-26-48-058
+2023-06-27T08:27:12.0182147Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Ending phone home.
+2023-06-27T08:27:12.1025444Z 2023-06-27 04:27:12 EDT DEBUG [pool-2-thread-1] --- completed phone home
+2023-06-27T08:27:12.1026189Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Detect shutdown completed.
+2023-06-27T08:27:12.1026760Z 2023-06-27 04:27:12 EDT DEBUG [main] --- All Detect actions completed.
+2023-06-27T08:27:12.1047807Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1048367Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1048897Z 2023-06-27 04:27:12 EDT DEBUG [main] --- === Additional  Information ===
+2023-06-27T08:27:12.1049427Z 2023-06-27 04:27:12 EDT DEBUG [main] --- 
+2023-06-27T08:27:12.1070961Z 2023-06-27 04:27:12 EDT DEBUG [main] --- ====== Detect Operations ======
+2023-06-27T08:27:12.1071546Z 2023-06-27 04:27:12 EDT DEBUG [main] --- 
+2023-06-27T08:27:12.1072081Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Execute Detectors: SUCCESS
+2023-06-27T08:27:12.1072669Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Create Bdio 2 Files: SUCCESS
+2023-06-27T08:27:12.1073403Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Upload Legacy Bdio 2: SUCCESS
+2023-06-27T08:27:12.1074514Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Create Online Signature Scan Batch: SUCCESS
+2023-06-27T08:27:12.1075318Z 2023-06-27 04:27:12 EDT DEBUG [main] --- Execute Signature Scan CLI: SUCCESS
+2023-06-27T08:27:12.1082173Z 2023-06-27 04:27:12 EDT DEBUG [main] --- 
+2023-06-27T08:27:12.1082718Z 2023-06-27 04:27:12 EDT DEBUG [main] --- ===============================
+2023-06-27T08:27:12.1083252Z 2023-06-27 04:27:12 EDT DEBUG [main] --- 
+2023-06-27T08:27:12.1084222Z 2023-06-27 04:27:12 EDT DEBUG [main] --- 
+2023-06-27T08:27:12.1084848Z 2023-06-27 04:27:12 EDT INFO  [main] --- ======== Detect Issues ========
+2023-06-27T08:27:12.1085376Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1085905Z 2023-06-27 04:27:12 EDT INFO  [main] --- ======== Detect Result ========
+2023-06-27T08:27:12.1086636Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1087607Z 2023-06-27 04:27:12 EDT INFO  [main] --- Black Duck Project BOM: https://fis2.app.blackduck.com/api/projects/e5028351-13e9-4360-bc73-c094908f0ec9/versions/5d535cb0-cf70-4736-8687-f598bfcf5158/components
+2023-06-27T08:27:12.1088715Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1089300Z 2023-06-27 04:27:12 EDT INFO  [main] --- ======== Detect Status ========
+2023-06-27T08:27:12.1089907Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1090678Z 2023-06-27 04:27:12 EDT INFO  [main] --- Signature scan / Snippet scan on D:\azdev\bld01\_work\19\a\applicationpackage: FAILURE
+2023-06-27T08:27:12.1091656Z 2023-06-27 04:27:12 EDT INFO  [main] --- Overall Status: FAILURE_SCAN - Detect was unable to run the signature scanner against your source. Check your configuration.
+2023-06-27T08:27:12.1092393Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1093381Z 2023-06-27 04:27:12 EDT INFO  [main] --- If you need help troubleshooting this problem, generate a diagnostic zip file by adding '-d' to the command line, and provide it to Synopsys Technical Support. See 'Diagnostic Mode' in the Detect documentation for more information.
+2023-06-27T08:27:12.1094883Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1095414Z 2023-06-27 04:27:12 EDT INFO  [main] --- ===============================
+2023-06-27T08:27:12.1095945Z 2023-06-27 04:27:12 EDT INFO  [main] --- 
+2023-06-27T08:27:12.1105146Z 2023-06-27 04:27:12 EDT INFO  [main] --- Detect duration: 00h 00m 24s 071ms
+2023-06-27T08:27:12.1105803Z 2023-06-27 04:27:12 EDT ERROR [main] --- Exiting with code 6 - FAILURE_SCAN
+2023-06-27T08:27:12.1701407Z Result code of 6, exiting
+2023-06-27T08:27:12.2762681Z ##[error]Cmd.exe exited with code '6'.
+2023-06-27T08:27:12.3438962Z ##[section]Finishing: Run blackduck scan for scheduled builds
