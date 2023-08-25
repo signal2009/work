@@ -1,0 +1,60 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vulnerabilityAssessments_Default_storageContainerPath": {
+            "value": null
+        },
+        "serverfarms_WestUSPlan_name": {
+            "value": null
+        },
+        "storageAccounts_aflogsgqecsi3dxehv4_name": {
+            "value": null
+        },
+        "Redis_tp_lab_ms_devicetrafficcontroller_name": {
+            "value": null
+        },
+        "servers_tp_lab_sql_devicetrafficcontroller_name": {
+            "value": null
+        },
+        "storageAccounts_tplabdevicetrafficcntrl_name": {
+            "value": null
+        },
+        "storageAccounts_tplabmsdevicetraffi8091_name": {
+            "value": null
+        },
+        "sites_tp_lab_uw_fa_ms_devicetrafficcontroller_name": {
+            "value": null
+        },
+        "streamingjobs_lab_PreviewEHdata_temp_name": {
+            "value": null
+        },
+        "serverfarms_ASP_tplabmsdevicetrafficcontroller_9731_name": {
+            "value": null
+        },
+        "components_tp_lab_uw_fa_ms_devicetrafficcontroller_name": {
+            "value": null
+        },
+        "components_tp_lab_uw_fa_ms_devicemanage202302101019_name": {
+            "value": null
+        },
+        "systemTopics_tplabdevicetrafficcntrl_0189b048_6ffc_4f8a_9ecb_795d7f35624a_name": {
+            "value": null
+        },
+        "smartdetectoralertrules_failure_anomalies___tp_lab_uw_fa_ms_devicetrafficcontroller_name": {
+            "value": null
+        },
+        "smartdetectoralertrules_failure_anomalies___tp_lab_uw_fa_ms_devicemanage202302101019_name": {
+            "value": null
+        },
+        "actiongroups_application_insights_smart_detection_externalid": {
+            "value": null
+        },
+        "workspaces_defaultworkspace_0cb29197_165b_4c34_8a90_8ca932ee27ec_eus_externalid": {
+            "value": null
+        },
+        "workspaces_DefaultWorkspace_0cb29197_165b_4c34_8a90_8ca932ee27ec_WUS_externalid": {
+            "value": null
+        }
+    }
+}
