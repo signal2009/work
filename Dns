@@ -1,1 +1,2 @@
 s-0fcd254d23f342eaa.server.transfer.us-east-2.amazonaws.com
+sftp -i password.pem PapaJohnsUAT@s-38577e335ff44b1a9.server.transfer.us-east-2.amazonaws.com
