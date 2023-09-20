@@ -1,0 +1,19 @@
+$course = @(
+    [PSCustomobject]@{
+        Id     = 1
+        Name   = 'AZ-104 Azure Administrator'
+        Rating = 4.7
+    },
+
+    [PSCustomobject]@{
+        Id     = 1
+        Name   = 'AZ-105 Azure Administrator'
+        Rating = 4.9
+    },
+
+    [PSCustomobject]@{
+        Id     = 1
+        Name   = 'AZ-101 Azure Administrator'
+        Rating = 4.2
+    }
+)
