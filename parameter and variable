@@ -1,0 +1,32 @@
+difference between parameter and variable
+ChatGPT
+In the context of programming, "parameters" and "variables" are fundamental concepts, but they serve different purposes and have different roles within a program.
+
+Parameters:
+
+Parameters are placeholders within a function or method definition that allow the function to accept input from the caller. When a function is defined, it may require certain input to perform its operations effectively. Parameters are used to receive this input. Parameters are declared in the function signature and act as local variables within the function.
+Example (in pseudo-code):
+python
+Copy code
+function greet(name):
+    print("Hello, " + name)
+
+# 'name' is a parameter in the 'greet' function
+greet("Alice")  # "Hello, Alice"
+Variables:
+
+Variables are containers that hold values or references to values within a program. They are used to store and manipulate data during the execution of a program. Variables have a specific data type associated with them (e.g., integer, string, boolean) and can be assigned different values during the program's execution.
+Example (in pseudo-code):
+python
+Copy code
+age = 30  # 'age' is a variable holding the value 30
+name = "John"  # 'name' is a variable holding the value "John"
+
+# Variables can be updated with new values
+age = 31  # 'age' is now holding the value 31
+In summary, parameters are used to pass data into a function, allowing the function to work with that data. Variables, on the other hand, are used to store and manage data throughout the program's execution. Parameters are typically local to a specific function or method, while variables can have broader scope depending on where they are defined within the program.
+
+
+
+
+
