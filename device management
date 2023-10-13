@@ -1,0 +1,9 @@
+steps:
+- task: AzurePowerShell@5
+  displayName: 'Scale UP PPCH DB'
+  inputs:
+    azureSubscription: Lab
+    ScriptPath: '$(System.DefaultWorkingDirectory)\Pipeline\RG\Logging\Invoke-PPCHDBScaling.ps1'
+    ScriptArguments: '-ScaleOption "Up" -DatabaseName "DeviceManagement" '
+    azurePowerShellVersion: LatestVersion
+    pwsh: true
