@@ -1,0 +1,24 @@
+2023-10-13T15:23:19.7696225Z ##[section]Starting: Scale UP PPCH DB
+2023-10-13T15:23:19.9124747Z ==============================================================================
+2023-10-13T15:23:19.9125272Z Task         : Azure PowerShell
+2023-10-13T15:23:19.9125660Z Description  : Run a PowerShell script within an Azure environment
+2023-10-13T15:23:19.9126089Z Version      : 5.179.0
+2023-10-13T15:23:19.9126370Z Author       : Microsoft Corporation
+2023-10-13T15:23:19.9126849Z Help         : https://aka.ms/azurepowershelltroubleshooting
+2023-10-13T15:23:19.9127306Z ==============================================================================
+2023-10-13T15:23:23.6311882Z Generating script.
+2023-10-13T15:23:23.7112200Z ========================== Starting Command Output ===========================
+2023-10-13T15:23:23.7338850Z ##[command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command ". 'D:\azdev\dep01\_work\_temp\fc032f8b-98af-45aa-b6eb-c484d9135986.ps1'"
+2023-10-13T15:23:25.4674772Z Added TLS 1.2 in session.
+2023-10-13T15:23:25.6583208Z ##[command]Import-Module -Name C:\Program Files\PowerShell\Modules\Az.Accounts\2.12.2\Az.Accounts.psd1 -Global
+2023-10-13T15:23:26.8568516Z ##[command]Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue
+2023-10-13T15:23:27.1695639Z ##[command]Clear-AzContext -Scope Process
+2023-10-13T15:23:27.2861739Z ##[command]Connect-AzAccount -ServicePrincipal -Tenant *** -Credential System.Management.Automation.PSCredential -Environment AzureCloud @processScope
+2023-10-13T15:23:28.7634552Z ##[command] Set-AzContext -SubscriptionId 0cb29197-165b-4c34-8a90-8ca932ee27ec -TenantId ***
+2023-10-13T15:23:29.2546652Z RDataSqlDatabase value: System.Collections.Hashtable System.Collections.Hashtable System.Collections.Hashtable
+2023-10-13T15:23:29.2548073Z DatabaseName value: DeviceManagement
+2023-10-13T15:23:29.7740807Z ##[error]Cannot validate argument on parameter 'ServerName'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.
+2023-10-13T15:23:39.5140532Z ##[error]PowerShell exited with code '1'.
+2023-10-13T15:23:41.3134532Z ##[command]Disconnect-AzureRmAccount -Scope Process -ErrorAction Stop
+2023-10-13T15:23:41.4025363Z ##[warning]Run Connect-AzureRmAccount to login.
+2023-10-13T15:23:41.5043655Z ##[section]Finishing: Scale UP PPCH DB
