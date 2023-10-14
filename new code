@@ -1,0 +1,158 @@
+<#
+  .SYNOPSIS
+  Runs logging database partition maintenance
+
+  .DESCRIPTION
+  Runs the partition swap stored procedure in the PinpadconnectionHistory database to truncate old data
+
+  .PARAMETER ScaleOption
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER RDataSqlDatabase
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER SecretName
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER SqlUserName
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER ResourceGroupName
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER VaultName
+  ScaleOption that decides to scale up or scale down
+
+  .PARAMETER DatabaseName
+  ScaleOption that decides to scale up or scale down
+
+.EXAMPLE
+  Invoke-PPCHDBScaling.ps1 -ScaleOption Up
+
+  Running from AutomationAccount
+#>
+
+param (
+  [validateSet("Up", "Down")]
+  [string]$ScaleOption,
+  [array]$RDataSqlDatabase = (Import-Clixml "$env:System_DefaultWorkingDirectory\rDataSqlDatabase.xml"),
+  [string]$SecretName = "SQLAdminPassword",
+  [string]$SqlUserName = "triposadmin",
+  [string]$ResourceGroupName = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgNameData.xml"),
+  [string]$VaultName = (Import-Clixml "$env:System_DefaultWorkingDirectory\rNameKeyVault.xml"),
+  [string]$DatabaseName = "PINPadConnectionHistory"
+)
+
+$ErrorActionPreference = "Stop"
+
+
+<# Get current connection and log in to Azure
+
+switch ((Get-AzContext).Subscription.Name) {
+  "triposlab" {
+    $SqlServerName = "tp-lab-uw-sql-02"
+    $VaultName = "tripos-kv-shared-Lab"
+    $SecretName = "SQLAdminPassword"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "vantiv.tripos.lab.Data"
+  }
+  "triposqa" {
+    $SqlServerName = "tp-qa-uw-sql-02"
+    $VaultName = "tripos-kv-shared-QA"
+    $SecretName = "SQLAdminPassword"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "vantiv.tripos.qa.Data"
+  }
+  "triposuat" {
+    $SqlServerName = "tp-uat-uw-sql-02"
+    $VaultName = "tripos-kv-shared-UAT"
+    $SecretName = "SQLAdminPassword"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "vantiv.tripos.uat.Data"
+  }
+  "triposactual" {
+    $SqlServerName = "tp-actual-uw-sql-02"
+    $VaultName = "tripos-kv-shared-Actual"
+    $SecretName = "SQLAdminPassword"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "vantiv.tripos.actual.Data"
+  }
+  "triposdrtest" {
+    $SqlServerName = "tp-drtest-ue-sql-02"
+    $VaultName = "tripos-kv-shared-drtest"
+    $SecretName = "SQLAdminPassword"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "vantiv.tripos.drtest.Data"
+  }
+  "triposstandby" {
+    $SqlServerName = "tp-standby-uw-sql-02"
+    $VaultName = "tp-standby-uw-kv"
+    $SecretName = "SQLAdmin-Standby"
+    $SqlUserName = "triposadmin"
+    $ResourceGroupName = "tp-standby-Data"
+  }
+}
+
+$DatabaseName = "PinPadConnectionHistory"#>
+
+try {
+  Write-Output "RDataSqlDatabase value: $RDataSqlDatabase"
+  Write-Output "DatabaseName value: $DatabaseName"
+  # Get database object
+  $Params = @{
+    DatabaseName      = $DatabaseName
+    ServerName        = ($RDataSqlDatabase | Where-Object { $_.Name -eq $DatabaseName }).Server.Primary
+    ResourceGroupName = $ResourceGroupName
+  }     # Set database to higher service tier while maintenance is running
+  $Database = Get-AzSqlDatabase @Params
+  Write-Output "The $DatabaseName database is currently at $($Database.Edition) edition, $($Database.CurrentServiceObjectiveName) service objective"
+  Switch ($ScaleOption) {
+    "Up" {
+      $NewEdition = "Standard"
+      $standardServiceObjectiveMap = @{
+        S0  = "S1"
+        S1  = "S2"
+        S2  = "S3"
+        S3  = "S4"
+        S4  = "S6"
+        S6  = "S7"
+        S7  = "S9"
+        S9  = "S12"
+        S12 = "S12"
+      }
+      $NewObjectiveName = $($standardServiceObjectiveMap[$Database.CurrentServiceObjectiveName])
+
+      $Params += @{Edition = $NewEdition }
+      $Params += @{RequestedServiceObjectiveName = $NewObjectiveName }
+
+      Write-Output "Scaling the $DatabaseName database to $NewEdition edition, $NewObjectiveName service objective"
+      Set-AzSqlDatabase @Params
+
+    }
+    "Down" {
+      # Reset database service level
+      $NewEdition = "Standard"
+      $standardServiceObjectiveMap = @{
+        S1  = "S0"
+        S2  = "S1"
+        S3  = "S2"
+        S4  = "S3"
+        S6  = "S4"
+        S7  = "S6"
+        S9  = "S7"
+        S12 = "S9"
+      }
+      $NewObjectiveName = $($standardServiceObjectiveMap[$Database.CurrentServiceObjectiveName])
+
+      $Params += @{Edition = $NewEdition }
+      $Params += @{RequestedServiceObjectiveName = $NewObjectiveName }
+
+      Write-Output "Scaling the $DatabaseName database to $NewEdition edition, $NewObjectiveName service objective"
+      Set-AzSqlDatabase @Params
+    }
+
+  }
+}
+catch {
+  throw $Error[0]
+}
