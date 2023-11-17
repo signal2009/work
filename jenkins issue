@@ -1,0 +1,57 @@
+File Create Operation:
+Creating file: /opt/jenkins/jenkap/workspace/nsactions-db-service_master-W43EUWZOOQNE23RVEGP2X3C6LZ34R5QXWC677HXYWIFIM5TJ6DVA/index.html
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Checkmarx scan)
+[Pipeline] node
+Running on Jenkins2 in /opt/jenkins/jenkap/workspace/nsactions-db-service_master-W43EUWZOOQNE23RVEGP2X3C6LZ34R5QXWC677HXYWIFIM5TJ6DVA
+[Pipeline] {
+[Pipeline] checkout
+Cloning the remote Git repository
+Cloning repository git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git
+ > git init /opt/jenkins/jenkap/workspace/nsactions-db-service_master-W43EUWZOOQNE23RVEGP2X3C6LZ34R5QXWC677HXYWIFIM5TJ6DVA # timeout=10
+Fetching upstream changes from git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git
+ > git --version # timeout=10
+ > git fetch --tags --progress git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git +refs/heads/*:refs/remotes/origin/*
+ > git config remote.origin.url git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git # timeout=10
+Fetching upstream changes from git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git
+ > git fetch --tags --progress git@github.worldpay.com:Worldpay/iq-mod-transactions-db-service.git +refs/heads/*:refs/remotes/origin/*
+Checking out Revision 90c40156549ecf5a713fb3fa4aea8f8762eb77f6 (master)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 90c40156549ecf5a713fb3fa4aea8f8762eb77f6
+Commit message: "query print enabled in dev env"
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] tool
+[Pipeline] envVarsForTool
+[Pipeline] tool
+[Pipeline] envVarsForTool
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+params.runCheckmarxParam=true
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] step
+[Cx-Warning]: Invalid source encoding (configuration) value: [Default Configuration]. Using default configuration.
+[Cx-Info]: ---------------------------------------Configurations:------------------------------------
+[Cx-Info]: plugin version: 8.90.5
+[Cx-Info]: server url: https://worldpay.checkmarx.net
+[Cx-Info]: username: DevOpsandToolsTeam@vantiv.com
+[Cx-Info]: project name: iq-mod-transactions-db-service_dev
+[Cx-Info]: team path: \CxServer\SP\WorldPay\PortalandPartnerAPI\iQ-Modernization
+[Cx-Info]: team id: null
+[Cx-Info]: is synchronous mode: true
+[Cx-Info]: deny project creation: false
+[Cx-Info]: SAST scan enabled: true
+[Cx-Info]: avoid duplicated projects scans: true
+[Cx-Info]: enable Project Policy Enforcement: false
+[Cx-Info]: preset id: 100000
+[Cx-Info]: SAST folder exclusions: target
