@@ -1,0 +1,159 @@
+<#
+  .SYNOPSIS
+  Test runner for Automated and Manual tests of this script.
+
+  .DESCRIPTION
+  Test runner for Automated and Manual tests of this script.
+
+  .EXAMPLE
+  Inline Script:
+  param (
+    [string]$Path,
+    [string]$FileName
+    )
+    Set-Location $Path
+    Import-Module Pester
+    Invoke-Pester -PassThru -OutputFile "$Path\TEST-$FileName.xml" -OutputFormat NUnitXml -EnableExit -Tag 'Integration' -Script @{
+      Path = ".\$FileName.ps1"
+    }
+  Script Arguments: -Path "$(System.DefaultWorkingDirectory)\Pipeline\RG\AppDeploy\tripos.CloudApplication" -FileName '100-New-ApplicationParameterFile.Tests'
+
+  Release Management Inline script
+
+  .EXAMPLE
+  Invoke-Pester .\Source\Pipeline\RG\AppDeploy\tripos.CloudApplication\100-New-ApplicationParameterFile.Tests.ps1 -Tag Unit
+
+  Run Unit Tests for troubleshooting. This uses the Test-AzResourceGroupDeployment cmdlet instead of New-AzResourceGroupDeployment.
+
+  Manually deploys the template to simulate azdo. This run the deployment with New-AzResourceGroupDeployment.
+#>
+param(
+  [Parameter(Mandatory = $false)]
+  [Switch]$Legacy
+)
+$runnerScriptName = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
+$runnerScript = "$PSScriptRoot\$runnerScriptName"
+
+if ($legacy) {
+  $setDeploymentVariables = (Resolve-Path -Path "$PSScriptRoot\..\..\..\010-Set-DeploymentVariables.legacy.ps1").Path
+  $target = 'Lab'
+}
+else {
+  $setDeploymentVariables = (Resolve-Path -Path "$PSScriptRoot\..\..\..\010-Set-DeploymentVariables.ps1").Path
+  $target = 'standby'
+}
+
+if ($null -eq $env:RELEASE_REASON) {
+  # NOT a azdo Release so we need to set some stuff up
+  $env:System_DefaultWorkingDirectory = "TestDrive:\"
+  $setDeploymentVariablesParams = Import-Clixml -Path "$PSScriptRoot\..\..\..\010-Set-DeploymentVariablesParams.xml"
+  $setDeploymentVariablesParams.Target = $target
+}
+
+
+Describe -Name $runnerScriptName -Tag 'Unit', 'Integration' -Fixture {
+
+  It 'deploy script should exist' {
+    Get-Item -Path $runnerScript -ErrorAction SilentlyContinue | Should Be $true
+  }
+}
+
+Describe -Name "$runnerScriptName - Unit" -Tag 'Unit' -Fixture {
+
+  Mock -CommandName Write-Host -MockWith { }
+  Mock -CommandName Add-AzAccount -MockWith { $null }
+  Mock -CommandName Set-AzResource -MockWith { $null }
+
+  It 'set deployment variables should run successfully' {
+    { & $setDeploymentVariables @setDeploymentVariablesParams } | Should -Not -Throw
+  }
+
+  Context '100-New-ApplicationParameterFile' {
+    $params = @{
+      ApplicationParameterPath = "$PSScriptRoot/CloudApplication.Standby.xml"
+    }
+    [string]$pathTools = (Import-Clixml "$env:System_DefaultWorkingDirectory\pathTools.xml")
+    . "$PathTools\0.0.2\Export-WpAzXmlAndLog.ps1"
+    . "$PathTools\0.0.2\Import-WpKeyVaultCertificate.ps1"
+    . "$PathTools\0.0.2\Invoke-WpSfEncryptSecret.ps1"
+
+    Mock Get-AzServiceFabricCluster -MockWith {
+      @{
+        Name               = 'tp-standby-uw-mocktest-sf-cluster'
+        Type               = 'Microsoft.ServiceFabric/clusters'
+        Location           = 'westus'
+        ManagementEndpoint = 'https://tp-standby-uw-mocktest-pip-api.westus.cloudapp.azure.com:19080'
+      }
+    }
+
+    It 'When Certificate does not exist in KeyVault' {
+      Mock Import-WpKeyVaultCertificate -MockWith {}
+      Mock Invoke-WpSfEncryptSecret -MockWith {
+        "Updated from Pester test"
+      }
+      Mock Get-AzKeyVaultCertificate -MockWith { $null }
+      { & $runnerScript @params } | Should Throw
+    }
+
+    It 'When Secret does not Exists in KeyVault' {
+      Mock Import-WpKeyVaultCertificate -MockWith {}
+      Mock Invoke-WpSfEncryptSecret -MockWith { Throw }
+      Mock Get-AzKeyVaultCertificate -MockWith {
+        @{
+          Thumbprint    = "95E5095AB52CD62EF8F5D678B9E446AAD246A16D"
+          RecoveryLevel = "Purgeable"
+          Enabled       = $true
+          Expires       = "\/Date(1625664554000)\/"
+          NotBefore     = "\/Date(1623071954000)\/"
+          VaultName     = "tp-standby-uw-kv"
+          Name          = "SFDataEnciphermentCert-standby"
+          Id            = "https://tp-standby-uw-kv.vault.azure.net:443/certificates/Testing-CertCreation/b198830346314491bb50a175ff4f3948"
+          Tag           = @{}
+        }
+      }
+
+      { & $runnerScript  @params } | Should Throw
+    }
+
+    $testCases = @(
+      @{TestCaseName = 'Validate-CloudApplication'; params = @{ ApplicationParameterPath = "$PSScriptRoot/CloudApplication.Standby.xml" } }
+      @{TestCaseName = 'Validate-DeviceGateway'; params = @{ ApplicationParameterPath = "$PSScriptRoot/DeviceGateway.Standby.xml" } }
+      @{TestCaseName = 'Validate-FileTransfer'; params = @{ ApplicationParameterPath = "$PSScriptRoot/FileTransfer.Standby.xml" } }
+      @{TestCaseName = 'Validate-WatchDog'; params = @{ ApplicationParameterPath = "$PSScriptRoot/WatchDog.Standby.xml" } }
+      @{TestCaseName = 'Validate-AsyncFacade'; params = @{ ApplicationParameterPath = "$PSScriptRoot/AsyncFacade.Standby.xml" } }
+    )
+
+    It "[<TestCaseName>]" -TestCases $testCases {
+      param($params)
+      Mock Get-AzEventHubKey -MockWith {
+        @{
+          SecondaryConnectionString = "Updated from Pester test"
+          PrimaryConnectionString   = "Updated from Pester test"
+        }
+      }
+      Mock Import-WpKeyVaultCertificate -MockWith {}
+      Mock Invoke-WpSfEncryptSecret -MockWith {
+        "Updated from Pester test"
+      }
+      Mock Get-AzKeyVaultCertificate -MockWith {
+        @{
+          Thumbprint    = "95E5095AB52CD62EF8F5D678B9E446AAD246A16D"
+          RecoveryLevel = "Purgeable"
+          Enabled       = $true
+          Expires       = "\/Date(1625664554000)\/"
+          NotBefore     = "\/Date(1623071954000)\/"
+          VaultName     = "tp-standby-uw-kv"
+          Name          = "SFDataEnciphermentCert-standby"
+          Id            = "https://tp-standby-uw-kv.vault.azure.net:443/certificates/Testing-CertCreation/b198830346314491bb50a175ff4f3948"
+          Tag           = @{}
+        }
+      }
+      & $runnerScript @params
+
+      $ApplicationParameters = (Import-Clixml "$env:System_DefaultWorkingDirectory\ApplicationParameters.xml")
+      $ApplicationParameters.EventHubAppenderConnectionString | Should -Be "Updated from Pester test"
+      $ApplicationParameters.DataEnciphermentCertificateThumbprint | Should -Be "95E5095AB52CD62EF8F5D678B9E446AAD246A16D"
+      $ApplicationParameters.EndpointCertificateThumbprint | Should -Be "95E5095AB52CD62EF8F5D678B9E446AAD246A16D"
+    }
+  }
+}
