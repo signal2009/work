@@ -1,0 +1,232 @@
+<#
+  .SYNOPSIS
+  Test runner for Integration and Unit tests of this script.
+
+  .DESCRIPTION
+  Test runner for Integration and Unit tests of this script.
+
+  .EXAMPLE
+  Inline Script:
+  param (
+    [string]$Path,
+    [string]$FileName
+  )
+  Set-Location $Path
+  Import-Module Pester
+  Invoke-Pester -PassThru -OutputFile "$Path\TEST-$FileName.xml" -OutputFormat NUnitXml -EnableExit -Tag 'Unit' -Script @{
+    Path = ".\$FileName.ps1"
+  }
+  Script Arguments: -Path "$(System.DefaultWorkingDirectory)\source\Pipeline\" -FileName '010-Set-DeploymentVariables.Legacy.Tests'
+
+  Release Management Inline script
+
+  .EXAMPLE
+  Invoke-Pester .\Source\Pipeline\010-Set-DeploymentVariables.Legacy.Tests.ps1 -Tag Unit
+
+  Run Unit Tests for troubleshooting.
+#>
+
+$runnerScriptName = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
+$testName = $runnerScriptName -replace '\.ps1', ''
+
+Describe -Name $testName -Tag 'Unit' -Fixture {
+  $runnerScript = "$PSScriptRoot\$runnerScriptName"
+  $env:System_DefaultWorkingDirectory = "TestDrive:\"
+  $target = 'lab'
+  $subscriptionId = 'fakeSubscriptionId'
+  $subscriptionName = "triPOS$target"
+  $spnGuid = 'fakeSPNguid'
+  $adGroupGuid = 'fakeGROUPguid'
+  $tenantId = 'fakeTenantId'
+
+  It 'should exist' {
+    Get-Item -Path $runnerScript -ErrorAction SilentlyContinue | Should Be $true
+  }
+  $params = Import-Clixml -Path "$PSScriptRoot\010-Set-DeploymentVariablesParams.xml"
+  $params.Target = $target
+
+
+  Mock -CommandName Get-AzContext -MockWith {
+    [PSCustomObject]@{
+      Name         = "$subscriptionName ($subscriptionId) - fake.user@tenant.onmicrosoft.com"
+      Subscription = @{
+        Id   = $subscriptionId
+        Name = $subscriptionName
+      }
+      Tenant       = @{
+        Id = $tenantId
+      }
+    }
+  }
+  Mock -CommandName Add-AzAccount -MockWith { $null }
+  Mock -CommandName Get-AzADServicePrincipal -MockWith { return [PSCustomObject]@{id = @{guid = $spnGuid } } }
+  Mock -CommandName Get-AzADGroup -MockWith { return [PSCustomObject]@{id = @{guid = $adGroupGuid } } }
+  Mock -CommandName Get-AzADGroupMember -MockWith {
+    return @([PSCustomObject]@{
+        Id          = "ghsd-sdfdsf-dsfdsf-sdfdsf"
+        DisplayName = "Sampleteammember"
+      })
+  }
+  Mock -CommandName Write-Host -MockWith { }
+
+  Context 'Subscription handling' {
+    It 'should throw when there is no Azure subscription context' {
+      Mock -CommandName Get-AzContext -MockWith { $null }
+      { & $runnerScript @params } | Should -Throw "Could not get the current Azure subscription context"
+    }
+    It 'should throw when the Azure subscription does not match the intended target' {
+      Mock -CommandName Get-AzContext -MockWith {
+        [PSCustomObject]@{
+          Name         = "$subscriptionName ($subscriptionId) - fake.user@tenant.onmicrosoft.com"
+          Subscription = @{
+            Id   = $subscriptionId
+            Name = 'wrongSubscriptionName'
+          }
+        }
+      }
+      { & $runnerScript @params } | Should -Throw "The current Azure subscription context is wrong."
+    }
+  }
+
+
+  Context 'Get-WpAzRegionAlias' {
+    $params.RegionPrimary = 'westus'
+    $params.RegionSecondary = 'East US'
+    It 'should throw when region format is wrong' {
+      { & $runnerScript @params } | Should -Throw "Unknown Region"
+    }
+  }
+
+  Context 'Validation' {
+    Mock -CommandName Get-AzVirtualNetwork -MockWith { $null }
+    $params.RegionPrimary = 'West Us'
+    $params.RegionSecondary = 'East Us'
+
+    It 'the script should not throw' {
+      { & $runnerScript @params } | Should -Not -Throw
+    }
+
+    It "should write values to disk" {
+      Import-Clixml -Path 'TestDrive:\target.xml' | Should -Be $params.Target
+    }
+
+    Context 'RG SubLevelInfra' {
+      $azureRegion = Import-Clixml -Path 'TestDrive:\azureRegion.xml'
+
+      It "AzureRegion" {
+        $azureRegion -is [hashtable] | Should -Be $true
+        $azureRegion.Primary.Alias | Should -Be 'uw'
+        $azureRegion.Primary.Name | Should -Be 'westus'
+        $azureRegion.Primary.DisplayName | Should -Be 'west us'
+        $azureRegion.Secondary.Alias | Should -Be 'ue'
+        $azureRegion.Secondary.Name | Should -Be 'eastus'
+        $azureRegion.Secondary.DisplayName | Should -Be 'east us'
+      }
+    }
+
+    Context 'RG Data' {
+      $rgNameData = Import-Clixml -Path 'TestDrive:\rgNameData.xml'
+      # [array]$rDataSqlServer = Import-Clixml -Path 'TestDrive:\rDataSqlServer.xml'
+      $rDataSqlServer = Import-Clixml -Path 'TestDrive:\rDataSqlServer.xml'
+      $sqlPasswordAdmin = Import-Clixml -Path 'TestDrive:\SqlPasswordAdmin.xml'
+      $rDataSqlDatabase = Import-Clixml -Path 'TestDrive:\rDataSqlDatabase.xml'
+
+      It 'RG Name' {
+        $rgNameData | Should -Be "vantiv.tripos.$target.Data"
+      }
+
+      <# It 'SqlPasswordAdmin' {
+        $sqlPasswordAdmin.Secure | Should -BeOfType SecureString
+      } #>
+      Context 'rDataSqlServer' {
+        It 'type is correct' {
+          # $rDataSqlServer -is [Array] | Should -Be $true
+          $rDataSqlServer -is [System.Collections.ArrayList] | Should -Be $true
+        }
+        It 'Instances exist' {
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target -and $_.ForceDeploy -eq 'false' }).Name | Should -BeLike "sql-tripos-$target*"
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target -and $_.ForceDeploy -eq 'true' }).Name | Should -BeLike "tp-$target*"
+        }
+        It 'PinPadRegistry' {
+          $rDataSqlServer.Tags.PinPadRegistry | Should -Not -BeNullOrEmpty
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'Primary' }).Location | Should -Be 'westus'
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'GeoReplica01' }).Location | Should -Be 'eastus'
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'GeoReplica02' }).Location | Should -Be 'westus'
+        }
+        It 'PinPadConnectionHistory' {
+          $rDataSqlServer.Tags.PinPadConnectionHistory | Should -Not -BeNullOrEmpty
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'Primary' }).Location | Should -Be 'westus'
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'GeoReplica01' }).Location | Should -Be 'eastus'
+        }
+        It 'LaneConfiguration' {
+          $rDataSqlServer.Tags.PinPadRegistry | Should -Not -BeNullOrEmpty
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.LaneConfiguration -eq 'Primary' }).Location | Should -Be 'westus'
+          ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.LaneConfiguration -eq 'GeoReplica01' }).Location | Should -Be 'eastus'
+        }
+      }
+
+      Context 'rDataSqlDatabase' {
+        It 'type is correct' {
+          $rDataSqlDatabase -is [System.Collections.ArrayList] | Should -Be $true
+        }
+        It 'PinPadRegistry' {
+          $actual = $rDataSqlDatabase | Where-Object { $_.Name -eq 'PinPadRegistry' }
+          $actual.Server.Primary | Should -Be 'sql-tripos-lab-cwam7rbx6nlve'
+          $actual.Location | Should -Be "westus"
+          $actual.Server.GeoReplica01 | Should -Be 'sql-tripos-labeastuscwa'
+          $actual.Server.GeoReplica02 | Should -Be "tp-$target-uw-sql-02"
+          $actual.Sku.Name.$target | Should -Be 'Standard'
+          $actual.Sku.Capacity.$target | Should -Be 10
+        }
+        It 'PinPadConnectionHistory' {
+          $actual = $rDataSqlDatabase | Where-Object { $_.Name -eq 'PinPadConnectionHistory' }
+          $actual.Server.Primary | Should -Be "tp-$target-uw-sql-02"
+          $actual.Location | Should -Be "westus"
+          $actual.Server.GeoReplica01 | Should -Be 'sql-tripos-labeastuscwa'
+          $actual.Sku.Name.$target | Should -Be 'Standard'
+          $actual.Sku.Capacity.$target | Should -Be 20
+        }
+        It 'LaneConfiguration' {
+          $actual = $rDataSqlDatabase | Where-Object { $_.Name -eq 'LaneConfiguration' }
+          $actual.Server.Primary | Should -Be "tp-$target-uw-sql-02"
+          $actual.Location | Should -Be "westus"
+          $actual.Server.GeoReplica01 | Should -Be "sql-tripos-labeastuscwa"
+          $actual.Sku.Name.$target | Should -Be 'Standard'
+          $actual.Sku.Capacity.$target | Should -Be 20
+        }
+      }
+    }
+    Context 'RG Logging' {
+
+      $rgLegacyLogging = (Import-Clixml 'TestDrive:\rgLegacyLogging.xml')
+      $rgLogging = (Import-Clixml 'TestDrive:\rgLogging.xml')
+      $azureRegion = (Import-Clixml 'TestDrive:\azureRegion.xml')
+      Context 'rLoggingEventHub' {
+        $rLoggingEventHub = (Import-Clixml 'TestDrive:\RLoggingEventHub.xml')
+        $eventHubNameSpace = $rLoggingEventHub.$($azureRegion.primary.name)
+
+        It 'type is correct' {
+          $eventHubNameSpace -is [System.Collections.HashTable] | Should -Be $true
+        }
+        It 'RG Name' {
+          ($eventHubNameSpace.$target | where-Object { $_.Name -like 'triposhub*' }).ResourceGroupName | Should -Be $rgLegacyLogging
+          ($eventHubNameSpace.$target | where-Object { $_.Name -like "tp-$Target*" }).ResourceGroupName.Count | Should -Be 1
+        }
+        It 'EventHub Properties' {
+          ($eventHubNameSpace.$target | where-Object { $_.ResourceGroupName -like 'vantiv*' }).Name | Should -BeLike "tripos*"
+          ($eventHubNameSpace.$target | where-Object { $_.ResourceGroupName -like 'tp*' }).Name | Should -BeLike "tp-$Target*"
+          $eventHubNameSpace.$target.SKU | foreach-Object { $_ | Should -Match 'Standard' }
+          $eventHubNameSpace.$target.Capacity | foreach-Object { $_ | Should -BeGreaterOrEqual 1 }
+        }
+      }
+    }
+  }
+}
+
+Describe -Name $runnerScriptName -Tag 'Integration' -Fixture {
+  # [string]$ResourceGroupName = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgNameSubLevelInfra.xml")
+
+  It -Skip "true should be false" {
+    $true | Should -Be $false
+  }
+}
