@@ -1,0 +1,175 @@
+<#
+  .SYNOPSIS
+  Creates the New Parameter File for tripos Cloud Application
+
+  .DESCRIPTION
+  Creates the Parameter file needed for tripos Cloud application deployment
+
+  .PARAMETER Target
+  The Azure Subscription Alias that is targeted by this script.
+
+  .PARAMETER RgApp
+  The name and Location of the resource group where the resource deployed by this script will be deployed into.
+
+  .PARAMETER ResourceGroupAlias
+  The resource group alias for logging
+
+  .PARAMETER AppDeployParameters
+  Hashtable containing details of Service fabric resources
+
+  .PARAMETER PathTools
+  The path to the tools to use for this script. (Deploy-ArmTemplate.ps1, etc)
+
+  .PARAMETER ApplicationParameterPath
+  The Path of parameter XML from the tripos Application Source Code
+
+  .EXAMPLE
+  $(System.DefaultWorkingDirectory)\Pipeline\RG\AppDeploy\100-New-ApplicationParameterFile.ps1 -ApplicationParameterPath "$env:System_DefaultWorkingDirectory\tripos.CloudApplication\drop\projectartifacts\Source\tripos.CloudApplication\ApplicationParameters\Lab.xml"
+
+  Running from azdo.
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param(
+  [string]$Target = (Import-Clixml "$env:System_DefaultWorkingDirectory\Target.xml"),
+  [string]$ResourceGroupAlias = (Import-Clixml "$env:System_DefaultWorkingDirectory\ResourceGroupAlias.xml"),
+  [HashTable]$RgApp = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgApp.xml"),
+  [HashTable]$AppDeployParameters = (Import-Clixml "$env:System_DefaultWorkingDirectory\AppDeployParameters.xml"),
+  [string]$PathTools = (Import-Clixml "$env:System_DefaultWorkingDirectory\pathTools.xml"),
+  [ValidateScript( { Test-Path -Path $_ })]
+  [string]$ApplicationParameterPath = "$env:System_DefaultWorkingDirectory\tripos.CloudApplication\drop\projectartifacts\Source\tripos.CloudApplication\ApplicationParameters\Lab.xml"
+)
+try {
+
+  . "$PathTools\0.0.2\Export-WpAzXmlAndLog.ps1"
+  . "$PathTools\0.0.2\Import-WpKeyVaultCertificate.ps1"
+  . "$PathTools\0.0.2\Invoke-WpSfEncryptSecret.ps1"
+  
+  Import-module servicefabric -skipeditioncheck
+
+  $keyVaultName = $AppDeployParameters.KeyVaultName
+
+  Import-WpKeyVaultCertificate -KeyVaultName $keyVaultName -CertificateName SFDataEnciphermentCert-$Target
+  Import-WpKeyVaultCertificate -KeyvaultName $keyVaultName -CertificateName SFAdminClientCert-$Target
+
+  $dataEnciphermentThumbprint = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "SFDataEnciphermentCert-$Target").Thumbprint
+  $sfClusterCertThumbprint = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "SFClusterCert-$Target").Thumbprint
+  $sfAdminClientCertThumbprint = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "SFAdminClientCert-$Target").Thumbprint
+  $sfConnectionEndpoint = (((Get-AzServiceFabricCluster -ResourceGroupName $RgApp.Name).ManagementEndpoint) -replace ('https://', '')) -replace ('19080', '19000')
+
+  $params = @{
+    KeyVaultName               = $keyVaultName
+    DataEnciphermentThumbprint = $dataEnciphermentThumbprint
+  }
+
+  [xml]$ParameterXML = Get-Content -Path $ApplicationParameterPath
+  $ApplicationName = $ParameterXML.Application.Name
+  $updatedParameters = switch ($ApplicationName) {
+    'fabric:/TriPos.Cloud.Application' {
+      @{
+        DataEnciphermentCertificateThumbprint   = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint           = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        DeviceTLSCertificateThumbprint          = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
+
+        ApplicationInsightsInstrumentationKey   = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsInstrumentationKey'
+        ExpressAcceptorId                       = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAcceptorId'
+        ExpressAccountId                        = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAccountID'
+        ExpressAccountToken                     = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAccountToken'
+
+
+        BinTableApi_AuthCode                    = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.BintableAuth
+        PaymentDeviceRegistryConnectionString   = Invoke-WpSfEncryptSecret @params -SecretName 'Database-ConnectionString-PinPadRegistry-FOG'
+        CacheConnection                         = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.CacheConnection
+        EventHubAppenderConnectionString        = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+        ServiceBusConnectionString              = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.ServiceBus
+        PinpadConnectionHistoryConnectionString = Invoke-WpSfEncryptSecret @params -SecretName 'Database-ConnectionString-PinPadConnectionHistory-FOG-App'
+        #LaneLockingCacheConnectionString       = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.LaneLockingCacheConnectionString
+
+        ExpressHostUrl                          = $AppDeployParameters.ExpressUrl
+        AuthServiceBaseUri                      = $AppDeployParameters.AuthServiceUrl
+        BinTableUrl                             = $AppDeployParameters.BintableUrl
+
+        useAuthService                          = $AppDeployParameters.useAuthService
+        mockexpress                             = $AppDeployParameters.mockexpress
+        useLaneConfigService                    = $AppDeployParameters.useLaneConfigService
+        FeatureLaneLocking                      = $AppDeployParameters.useLaneLockingService
+        ResourceGroupName                       = $ResourceGroupAlias
+      }
+    }
+    'fabric:/TriPos.Cloud.DeviceGateway' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        DeviceTLSCertificateThumbprint        = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
+        ApplicationInsightsInstrumentationKey = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsInstrumentationKey'
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+        ResourceGroupName                     = $ResourceGroupAlias
+      }
+    }
+    'fabric:/TriPos.Cloud.AsyncFacade.Application' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        ApplicationInsightsInstrumentationKey = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsInstrumentationKey'
+        ServiceBusConnectionString            = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.ServiceBus
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.AsyncEventHubNameSpace
+      }
+    }
+    'fabric:/TriPos.Cloud.FileTransfer' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        ApplicationInsightsInstrumentationKey = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsInstrumentationKey'
+        ServiceBusConnectionString            = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.ServiceBus
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+      }
+    }
+    'fabric:/TriPos.WatchDog' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        DeviceTLSCertificateThumbprint        = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+      }
+    }
+    'fabric:/TriPos.Cloud.LaneConfiguration' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        DeviceTLSCertificateThumbprint        = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+        ApplicationInsightsConnectionString   = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsConnectionString'
+        LaneConfigCacheConnectionString       = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.LaneConfigCacheConnectionString
+        LaneConfigDBConnectionString          = Invoke-WpSfEncryptSecret @params -SecretName 'Database-ConnectionString-LaneConfiguration-FOG'
+        ExpressAcceptorId                     = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAcceptorId'
+        ExpressAccountId                      = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAccountID'
+        ExpressAccountToken                   = Invoke-WpSfEncryptSecret @params -SecretName 'ExpressAccountToken'
+      }
+    }
+    'fabric:/DeviceTrafficController' {
+      @{
+        DataEnciphermentCertificateThumbprint = $dataEnciphermentThumbprint
+        EndpointCertificateThumbprint         = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointApi-$Target").Thumbprint
+        DeviceTLSCertificateThumbprint        = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
+        EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.AsyncEventHubNameSpace
+        ApplicationInsightsConnectionString   = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsConnectionString'
+      }
+    }
+  }
+  Write-Host "Application Parameters for $ApplicationName"
+  $updatedParameters | Export-CliXml -Path "$env:System_DefaultWorkingDirectory\ApplicationParameters.xml"
+  $updatedParameters | ConvertTo-Json
+  Export-WpAzXmlAndLog -Name 'ClusterConnectionParameters' -Value @{
+    ConnectionEndpoint   = $sfConnectionEndpoint
+    X509Credential       = $true
+    ServerCertThumbprint = $sfClusterCertThumbprint
+    FindType             = "FindByThumbprint"
+    FindValue            = $sfAdminClientCertThumbprint
+    StoreLocation        = "LocalMachine"
+    StoreName            = "My"
+  }
+}
+catch {
+  $message = $_.Exception.Message
+  $position = $_.InvocationInfo.PositionMessage.Split('+')[0].Trim()
+  Throw "[$message] [$position]"
+}
