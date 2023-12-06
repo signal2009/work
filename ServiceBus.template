@@ -1,0 +1,111 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "keyVault": {
+      "type": "object"
+    },
+    "serviceBus": {
+      "type": "Object"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.ServiceBus/namespaces",
+      "sku": "[parameters('serviceBus').sku]",
+      "name": "[parameters('serviceBus').Name]",
+      "apiVersion": "2018-01-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+      "name": "[concat(parameters('serviceBus').Name, '/ManageAccessKey')]",
+      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "rights": [
+          "Listen",
+          "Manage",
+          "Send"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBus').Name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/queues",
+      "name": "[concat(parameters('serviceBus').Name, '/', parameters('serviceBus').queue[copyIndex()].Name)]",
+      "apiVersion": "2018-01-01-preview",
+      "copy": {
+        "Name": "queue-copy",
+        "count": "[length(parameters('serviceBus').queue)]"
+      },
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "maxSizeInMegabytes": 1024,
+        "requiresDuplicateDetection": false,
+        "requiresSession": false,
+        "defaultMessageTimeToLive": "[parameters('serviceBus').queue[copyIndex()].TTL]",
+        "deadLetteringOnMessageExpiration": false,
+        "status": "Active",
+        "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+        "enablePartitioning": true,
+        "enableExpress": false,
+        "countDetails": {
+          "activeMessageCount": 0,
+          "deadLetterMessageCount": 0,
+          "scheduledMessageCount": 0,
+          "transferMessageCount": 0,
+          "transferDeadLetterMessageCount": 0
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBus').Name)]"
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "[concat('KVSecretUpdate-',parameters('serviceBus').Name)]",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[parameters('keyVault').resourceGroup]",
+      "dependson": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBus').Name)]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "name": "[concat(parameters('keyVault').Name[0], '/', 'ServiceBus-ConnectionString-',parameters('ServiceBus').Name,'-Manage')]",
+              "apiVersion": "2015-06-01",
+              "properties": {
+                "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules',parameters('ServiceBus').Name,'ManageAccessKey'),'2017-04-01').primaryConnectionString]"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "name": "[concat(parameters('keyVault').Name[1], '/', 'ServiceBus-ConnectionString-',parameters('ServiceBus').Name,'-Manage')]",
+              "apiVersion": "2015-06-01",
+              "properties": {
+                "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules',parameters('ServiceBus').Name,'ManageAccessKey'),'2017-04-01').primaryConnectionString]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
