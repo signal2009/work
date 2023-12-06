@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "null"
+    },
+    "virtualNetwork": {
+      "value": {}
+    },
+    "storageAccount": {
+      "value": []
+    },
+    "loadBalancer": {
+      "value": []
+    },
+    "vmss": {
+      "value": []
+    },
+    "adminPassword": {
+      "value": "null"
+    },
+    "certs": {
+      "value": {}
+    },
+    "serviceFabricCluster": {
+      "value": {}
+    },
+    "keyVault": {
+      "value": {}
+    },
+    "customScriptExtension": {
+      "value": {}
+    },
+    "diagnosticLoggingConfiguration": {
+      "value": {}
+    }
+  }
+}
