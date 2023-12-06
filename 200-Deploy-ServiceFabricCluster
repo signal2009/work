@@ -1,0 +1,116 @@
+<#
+  .SYNOPSIS
+  Deploys the Azure resource Service fabric cluster along with dependent resources
+
+  .DESCRIPTION
+  Deploys the Azure resource Service fabric cluster along with dependent resources
+
+  .PARAMETER Target
+  The Azure Subscription Alias that is targeted by this script.
+
+  .PARAMETER AzureRegion
+  The Azure Region where the deployment is targetting.
+
+  .PARAMETER RgApp
+  The name and location of the resource group where the resource deployed by this script will be deployed into.
+
+  .PARAMETER AppServiceFabric
+  Hashtable containing details of Service fabric resources
+
+  .PARAMETER NetworkWhiteList
+  Hashtable containing the network whitelist configuration for hWP
+
+  .PARAMETER PathTools
+  The path to the tools to use for this script. (Deploy-ArmTemplate.ps1, etc)
+
+  .PARAMETER DiagnosticLoggingConfiguration
+  Hashtable containing details for diagnostic logging
+
+  .PARAMETER DeploymentOptionalParameters
+  Optional paramaters hashtable that can be passed to override the default behaviour of the ARM template deployment.
+
+  .EXAMPLE
+  $(System.DefaultWorkingDirectory)\Pipeline\RG\App\200-Deploy-ServiceFabricCluster.ps1
+
+  Running from TFS.
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param(
+  [string]$Target = (Import-Clixml "$env:System_DefaultWorkingDirectory\Target.xml"),
+  [HashTable]$AzureRegion = (Import-Clixml "$env:System_DefaultWorkingDirectory\AzureRegion.xml"),
+  [Hashtable]$RgApp = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgApp.xml"),
+  [HashTable]$AppServiceFabric = (Import-Clixml "$env:System_DefaultWorkingDirectory\rAppServiceFabric.xml"),
+  [array]$NetworkWhiteList = (Import-Clixml "$env:System_DefaultWorkingDirectory\networkWhiteList.xml"),
+  [string]$PathTools = (Import-Clixml "$env:System_DefaultWorkingDirectory\pathTools.xml"),
+  [HashTable]$DiagnosticLoggingConfiguration = (Import-Clixml "$env:System_DefaultWorkingDirectory\diagnosticLoggingConfiguration.xml"),
+  [Hashtable]$DeploymentOptionalParameters = @{ }
+)
+try {
+  . "$PathTools\0.0.1\New-WpAzSecureStringreference.ps1"
+  . "$PathTools\0.0.1\Restart-triposVMSS.ps1"
+
+  $subscriptionContext = Get-AzContext
+  $currentContextId = $subscriptionContext.Account.Id
+  $accessobj = Get-AzAccessToken -ResourceUrl 'https://management.core.windows.net/'
+  $accessToken = $accessObj.Token
+  if (!$AppServiceFabric.ServiceFabricCluster.Version) {
+    $requesturi = "https://management.azure.com/subscriptions/$($SubscriptionContext.Subscription.Id)/providers/Microsoft.ServiceFabric/locations/$($AzureRegion.Primary.Name)/environments/Windows/clusterVersions?api-version=2018-02-01"
+    $header = @{
+      Authorization = "Bearer $($accessToken)"
+    }
+    $result = Invoke-RestMethod -Method GET -Uri $requesturi -Headers $header
+    $AppServiceFabric.ServiceFabricCluster.Version = $result.value[-1].name
+  }
+
+  $params = @{
+    SecretName                = "FabricAdmin-$target"
+    KeyVaultResourceGroupName = $AppServiceFabric.KeyVault.ResourceGroup
+    KeyVaultName              = $AppServiceFabric.KeyVault.Name
+    SubscriptionId            = $subscriptionContext.Subscription.Id
+  }
+  $fabricAdminSecret = New-WpAzSecureStringReference @params
+  $certs = @{
+    SFCluster          = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "SFClusterCert-$Target" | Select-Object Thumbprint, SecretId
+    SFDataEncipherment = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "SFDataEnciphermentCert-$Target" | Select-Object Thumbprint, SecretId
+    SFReadOnly         = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "SFReadOnlyClientCert-$Target" | Select-Object Thumbprint, SecretId
+    SFAdminClient      = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "SFAdminClientCert-$Target" | Select-Object Thumbprint, SecretId
+    EndpointAPI        = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "EndpointApi-$Target" | Select-Object Thumbprint, SecretId
+    EndpointDevice     = Get-AzKeyVaultCertificate -VaultName $AppServiceFabric.KeyVault.Name -Name "EndpointDevice-$Target" | Select-Object Thumbprint, SecretId
+  }
+  [hashtable] $customParameters = @{
+    VirtualNetwork                 = $AppServiceFabric.VirtualNetwork
+    StorageAccount                 = $AppServiceFabric.StorageAccount
+    LoadBalancer                   = $AppServiceFabric.VMSS.LoadBalancer
+    VMSS                           = $AppServiceFabric.VMSS
+    ServiceFabricCluster           = $AppServiceFabric.ServiceFabricCluster
+    Keyvault                       = $AppServiceFabric.KeyVault
+    Certs                          = $certs
+    'adminPassword:reference'      = $fabricAdminSecret
+    CustomScriptExtension          = $AppServiceFabric.CustomExtension
+    DiagnosticLoggingConfiguration = $DiagnosticLoggingConfiguration
+  }
+
+  $deployArmTemplateParams = @{
+    Target                           = $Target
+    ResourceGroupName                = $RgApp.Name
+    ResourceGroupLocation            = $RgApp.Location
+    TemplateFilePath                 = "$PSScriptRoot\ServiceFabric.template.json"
+    ParametersFilePath               = "$PSScriptRoot\ServiceFabric.parameters.json"
+    CustomParametersForParameterFile = $customParameters
+    DeploymentOptionalParameters     = $DeploymentOptionalParameters
+  }
+
+  if ($WhatIfPreference.isPresent) {
+    Write-Output $deployArmTemplateParams
+  }
+  else {
+    $output = . $PathTools\0.0.3\Deploy-ArmTemplate.ps1 @deployArmTemplateParams
+    #  Restart-triposVMSS -ResourceGroupName $ResourceGroupName
+    return $output
+  }
+}
+catch {
+  $message = $_.Exception.Message
+  $position = $_.InvocationInfo.PositionMessage.Split('+')[0].Trim()
+  Throw "[$message] [$position]"
+}
