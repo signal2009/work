@@ -1,0 +1,2524 @@
+<#
+  .SYNOPSIS
+  This script sets all variables that will be used in the current phase of the pipeline.
+
+  .DESCRIPTION
+  This script only takes in secrets and run time determined parameters and then builds all the variables needed for the rest of the scripts in the current phase of the pipeline.
+
+  .PARAMETER Target
+  This is the alias name of the target Azure subscription. For example target = 'standby' means the scripts will send deployments to the 'triposstandby' subscription.
+
+  .PARAMETER ResourceGroupAlias
+  This is a token used in the names of certain Azure resources to distinguish the current deployment. It is used for building resources that are unique to a release (not shared).
+
+  .PARAMETER RegionPrimary
+  The Azure Region where the primary resources are deployed to.
+
+  .PARAMETER RegionSecondary
+  The Azure Region where the secondary resources are deployed to.
+
+  .PARAMETER AzureADReaderID
+  The user id/SPN id for the account used to the perform group membership look ups in Azure AD.
+
+  .PARAMETER AzureADReaderSecret
+  The password for the AzureADReaderID account.
+
+  .PARAMETER RaftShareID
+  The Ad001 username for the account that has access to the raft file share
+
+  .PARAMETER RaftShareSecret
+  The pasword for the account that has access to the raft file share
+
+  .PARAMETER VMImage
+  OS Image used for the ServiceFabric Cluster VMScaleset
+
+   .PARAMETER APIVMSkuSize
+  SKU Size of the VM used by the ServiceFabric Cluster VMScaleSet
+
+  .PARAMETER EngVMSkuSize
+  SKU Size of the VM used by the ServiceFabric Cluster VMScaleSet
+
+  .PARAMETER DGwVMSkuSize
+  SKU Size of the VM used by the ServiceFabric Cluster VMScaleSet
+
+  .PARAMETER SysVMSkuSize
+  SKU Size of the VM used by the ServiceFabric Cluster VMScaleSet
+
+  .PARAMETER APINodeCount
+  Number of Instances for API VMSS
+
+  .PARAMETER ENGNodeCount
+  Number of Instances for Engine VMSS
+
+  .PARAMETER DGWNodeCount
+  Number of Instaces for DGW VMSS
+
+  .PARAMETER SysNodeCount
+  Number of Instaces for Seed VMSS
+
+  .PARAMETER SFClusterCodeVersion
+  Version of the Service Fabric Cluster
+
+  .PARAMETER TfsReleaseLink
+  The URL that the current TFS release is running under.
+
+  .PARAMETER DeployToDR
+  Set this to true if you want to deploy to the Secondary region
+
+  .PARAMETER useAuthService
+  Set this to true if Auth Service should be used
+
+  .PARAMETER mockExpress
+  Set this to true if Express auth should be mocked. For ex .DRTEST
+
+  .PARAMETER useLaneConfigService
+  Set this to true for using laneconfig service
+
+  .PARAMETER useLaneLockingService
+  Set this to true for using lanelocking(device traffic controller service)
+
+  .PARAMETER DgwLBSKU
+  Set this if we need to set to Basics
+
+  .EXAMPLE
+  $(System.DefaultWorkingDirectory)\Pipeline\RG\010-Set-DeploymentVariables.Legacy.ps1 -Target $(Target) -ResourceGroupAlias $(ResourceGroupAlias) -RegionPrimary '$(RegionPrimary)' -RegionSecondary '$(RegionSecondary)' -TfsReleaseLink $env:RELEASE_RELEASEWEBURL -CertificatePasswordAdministrativeClient $(CertificatePasswordAdministrativeClient) -CertificatePasswordDataEncipherment $(CertificatePasswordDataEncipherment) -CertificatePasswordEndpointApi $(CertificatePasswordEndpointApi) -CertificatePasswordEndpointDevice $(CertificatePasswordEndpointDevice) -CertificatePasswordServiceFabricAdmin $(CertificatePasswordServiceFabricAdmin) -CertificatePasswordServiceFabricReader $(CertificatePasswordServiceFabricReader) -SqlPasswordAdmin $(SqlPasswordAdmin) -SqlPasswordApplication $(SqlPasswordApplication) -AzureADReaderID $(WorldpayADReader-APPID) -AzureADReaderSecret $(WorldpayADReader-ClientSecret)
+
+  Running the script in TFS.
+
+  .NOTES
+  General notes
+#>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "")]
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory)]
+  # [ValidateSet('Standby')]
+  [string]$Target = 'Standby',
+
+  #Resource group alias can only be a maximum of 12 characters for future implementation
+  [Parameter(Mandatory)]
+  [string]$ResourceGroupAlias,
+
+  [Parameter(Mandatory)]
+  [string]$RegionPrimary,
+
+  [Parameter(Mandatory)]
+  [string]$RegionSecondary,
+
+  [Parameter(Mandatory)]
+  [string]$AzureADReaderID,
+
+  [Parameter(Mandatory)]
+  [string]$AzureADReaderSecret,
+
+  [Parameter(Mandatory)]
+  [string]$RaftShareID,
+
+  [Parameter(Mandatory)]
+  [string]$RaftShareSecret,
+
+  # Obtain Node Sizes: Get-AzureRmVMSize -Location $resourceGroupLocation
+  # https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general
+  [Parameter(Mandatory = $false)]
+  [validateSet(
+    '2019-Datacenter-Core-smalldisk',
+    '2019-Datacenter-Core',
+    '2022-Datacenter-core-smalldisk',
+    '2022-Datacenter-azure-edition-core-smalldisk'
+  )]
+  [string]$VmImage = '2019-Datacenter-Core-smalldisk',
+
+  [Parameter(Mandatory = $false)]
+  [validateSet(
+    'Standard_A1',
+    'Standard_A1_v2',
+    'Standard_A2_v2',
+    'Standard_D1_v2',
+    'Standard_D2_v2',
+    'Standard_D11_v2',
+    'Standard_E2_v3',
+    'Standard_G1',
+    'Standard_D2d_v4',
+    'Standard_D4d_v4'
+  )]
+  [string]$APIVmSkuSize = 'Standard_D2d_v4',
+
+  [Parameter(Mandatory = $false)]
+  [validateSet(
+    'Standard_A1',
+    'Standard_A1_v2',
+    'Standard_A2_v2',
+    'Standard_D1_v2',
+    'Standard_D2_v2',
+    'Standard_D11_v2',
+    'Standard_E2_v3',
+    'Standard_G1',
+    'Standard_D2d_v4',
+    'Standard_D4d_v4'
+  )]
+  [string]$EngVmSkuSize = 'Standard_D2d_v4',
+
+  [Parameter(Mandatory = $false)]
+  [validateSet(
+    'Standard_A1',
+    'Standard_A1_v2',
+    'Standard_A2_v2',
+    'Standard_D1_v2',
+    'Standard_D2_v2',
+    'Standard_D11_v2',
+    'Standard_E2_v3',
+    'Standard_G1',
+    'Standard_D2d_v4',
+    'Standard_D4d_v4'
+  )]
+  [string]$DGWVmSkuSize = 'Standard_D2d_v4',
+
+  [Parameter(Mandatory = $false)]
+  [validateSet(
+    'Standard_A1',
+    'Standard_A1_v2',
+    'Standard_A2_v2',
+    'Standard_D1_v2',
+    'Standard_D2_v2',
+    'Standard_D11_v2',
+    'Standard_E2_v3',
+    'Standard_G1',
+    'Standard_D2d_v4',
+    'Standard_D4d_v4'
+  )]
+  [string]$SysVmSkuSize = 'Standard_D2d_v4',
+
+  [Parameter(Mandatory = $false)]
+  [Int32]$APINodeCount = 3,
+
+  [Parameter(Mandatory = $false)]
+  [Int32]$EngNodeCount = 3,
+
+  [Parameter(Mandatory = $false)]
+  [Int32]$DGWNodeCount = 3,
+
+  [Parameter(Mandatory = $false)]
+  [Int32]$SysNodeCount = 3,
+
+  [string]
+  $SFClusterCodeVersion,
+
+  [Parameter(Mandatory = $false)]
+  [string]$TfsReleaseLink,
+
+  [Parameter(Mandatory = $false)]
+  [string]$DeployToDR = 'false',
+
+  [Parameter(Mandatory = $false)]
+  [string]$useAuthService = 'true',
+
+  [Parameter(Mandatory = $false)]
+  [string]$mockExpress = 'false',
+
+  [Parameter(Mandatory = $false)]
+  [string]$useLaneConfigService = 'true',
+
+  [Parameter(Mandatory = $false)]
+  [string]$useLaneLockingService = 'false',
+
+  [Parameter(Mandatory = $false)]
+  [validateSet('Basic', 'Standard', 'Global')]
+  [string]$DgwLBSkU = 'Basic'
+)
+
+#region ~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~
+
+. "$PSScriptRoot\Tools\0.0.2\Export-WpAzXmlAndLog.ps1"
+. "$PSScriptRoot\Tools\0.0.1\Get-WpAzRegionAlias.ps1"
+. "$PSScriptRoot\Tools\0.0.1\New-WpAzSecureStringReference.ps1"
+. "$PSScriptRoot\Tools\0.0.1\Get-WpStringHash.ps1"
+. "$PSScriptRoot\Tools\0.0.2\Get-VnetAddressSpace.ps1"
+
+#endregion ~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~
+
+#region ~~~~~~~~~~~~~~~ SET UP ~~~~~~~~~~~~~~~
+# Setting Preference variables
+$ErrorActionPreference = "Stop"
+# $InformationPreferenceBackup = $InformationPreference
+# $InformationPreference = 'Continue'
+
+$subscriptionContext = Get-AzContext
+if ($null -eq $subscriptionContext) {
+  Throw "Could not get the current Azure subscription context. Please run [Connect-AzAccount -Subscription tripos$Target]."
+}
+elseif ($subscriptionContext.Subscription.Name -ne "tripos$Target") {
+  Throw "The current Azure subscription context is wrong. [$($subscriptionContext.Name)] does not match [tripos$Target]."
+}
+else {
+  Write-Host "Azure context [$($subscriptionContext.Name)]"
+}
+
+#endregion ~~~~~~~~~~~~ SET UP ~~~~~~~~~~~~~~~
+
+#region ~~~~~~~~~~~~~~~ SCRIPT BODY ~~~~~~~~~~~~~~~
+try {
+  #region ~~~~~~~~~~~~~~~ EXPORT VARIABLES: GENERAL PURPOSE ~~~~~~~~~~~~~~~
+  $azureRegion = Export-WpAzXmlAndLog -Name 'azureRegion' -ReturnVariable -Value @{
+    Primary   = @{
+      DisplayName = $RegionPrimary
+      Alias       = (Get-WpAzRegionAlias -Region $RegionPrimary -ErrorAction Stop)
+      Name        = ($RegionPrimary.replace(' ', '')).ToLower()
+    }
+    Secondary = @{
+      DisplayName = $RegionSecondary
+      Alias       = (Get-WpAzRegionAlias -Region $RegionSecondary -ErrorAction Stop)
+      Name        = ($RegionSecondary.replace(' ', '')).ToLower()
+    }
+  }
+  $regionPrimaryAlias = $azureRegion.Primary.Alias
+  Export-WpAzXmlAndLog -Name 'RegionPrimary' -Value $azureRegion.Primary.Name
+  $target = Export-WpAzXmlAndLog -Name 'target' -Value $Target.toLower() -ReturnVariable
+  $subscriptionId = Export-WpAzXmlAndLog -Name 'subscriptionId' -Value $subscriptionContext.Subscription.Id -ReturnVariable
+  Export-WpAzXmlAndLog -Name 'ResourceGroupAlias' -Value $ResourceGroupAlias
+  $pathTools = Export-WpAzXmlAndLog -Name 'pathTools' -ReturnVariable -Value (Resolve-Path "$PSScriptRoot\Tools").Path
+  Export-WpAzXmlAndLog -Name 'pathResources' -Value (Resolve-Path "$PSScriptRoot\Resources").Path
+
+  $mail = Export-WpAzXmlAndLog -Name 'mail' -ReturnVariable -Value @{
+    Server = 'mail.nb01.local'
+    From   = 'triposrelease@fisglobal.com'
+    To     = @(
+      'devops@fisglobal.com'
+      'AzureDevAlerts@fisglobal.com'
+      'ExpressSRO@fisglobal.com'
+    )
+  }
+  Export-WpAzXmlAndLog -Name 'networkWhitelist' -ReturnVariable -Value @(
+    @{
+      Name           = 'hVantivCore'
+      CIDR           = '64.57.144.0/20'
+      StartIpAddress = '64.57.144.1'
+      EndIpAddress   = '64.57.159.255'
+    }
+    @{
+      Name           = 'IndoreAirtelIsp'
+      CIDR           = '182.75.127.192/29'
+      StartIpAddress = '182.75.127.192'
+      EndIpAddress   = '182.75.127.199'
+    }
+    @{
+      Name           = 'IndoreTataIspLink1'
+      CIDR           = '14.98.133.48/29'
+      StartIpAddress = '14.98.133.48'
+      EndIpAddress   = '14.98.133.55'
+    }
+    @{
+      Name           = 'IndoreTataIspLink2'
+      CIDR           = '14.98.133.56/29'
+      StartIpAddress = '14.98.133.56'
+      EndIpAddress   = '14.98.133.63'
+    }
+    @{
+      Name           = 'UKDesktopRange1'
+      CIDR           = '195.35.90.1/32'
+      StartIpAddress = '195.35.90.1'
+      EndIpAddress   = '195.35.90.1'
+    }
+    @{
+      Name           = 'UKDesktopRange2'
+      CIDR           = '195.5.91.1/32'
+      StartIpAddress = '195.5.91.1'
+      EndIpAddress   = '195.5.91.1'
+    }
+    @{
+      Name           = "GlobalProtectPrisma1"
+      CIDR           = '130.41.0.0/16'
+      StartIpAddress = '130.41.0.0'
+      EndIpAddress   = '130.41.255.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma2"
+      CIDR           = '134.238.0.0/16'
+      StartIpAddress = '134.238.0.0'
+      EndIpAddress   = '134.238.255.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma3"
+      CIDR           = '137.83.192.0/18'
+      StartIpAddress = '137.83.192.0'
+      EndIpAddress   = '137.83.255.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma4"
+      CIDR           = '139.180.248.0/24'
+      StartIpAddress = '139.180.248.0'
+      EndIpAddress   = '139.180.248.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma5"
+      CIDR           = '165.1.128.0/17'
+      StartIpAddress = '165.1.128.0'
+      EndIpAddress   = '165.1.255.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma6"
+      CIDR           = '208.127.0.0/16'
+      StartIpAddress = '208.127.0.0'
+      EndIpAddress   = '208.127.255.255'
+    }
+    @{
+      Name           = "GlobalProtectPrisma7"
+      CIDR           = '66.159.192.0/19'
+      StartIpAddress = '66.159.192.0'
+      EndIpAddress   = '66.159.223.255'
+    }
+  )
+  Export-WpAzXmlAndLog -Name 'sightstreamWhitelist' -Value @(
+    @{
+      Name           = 'SightStream-Lab'
+      CIDR           = '40.84.184.164/32'
+      StartIpAddress = '40.84.184.164'
+      EndIpAddress   = '40.84.184.164'
+    }
+    @{
+      Name           = 'SightStream-QA'
+      CIDR           = '13.84.220.180/32'
+      StartIpAddress = '13.84.220.180'
+      EndIpAddress   = '13.84.220.180'
+    }
+    @{
+      Name           = 'SightStream-UAT'
+      CIDR           = '23.102.163.133/32'
+      StartIpAddress = '23.102.163.133'
+      EndIpAddress   = '23.102.163.133'
+    }
+    @{
+      Name           = 'SightStream-Actual'
+      CIDR           = '13.85.10.146/32'
+      StartIpAddress = '13.85.10.146'
+      EndIpAddress   = '13.85.10.146'
+    }
+  )
+  Export-WpAzXmlAndLog -Name 'AkamaiWhitelist' -Value @(
+    '104.64.0.0/10',
+    '118.214.0.0/16',
+    '124.40.41.200/29',
+    '125.252.224.36/31',
+    '125.56.219.52/31',
+    '172.232.0.0/13',
+    '173.205.7.116/31',
+    '173.222.0.0/15',
+    '184.24.0.0/13',
+    '184.50.0.0/15',
+    '184.84.0.0/14',
+    '189.36.162.0/25',
+    '192.204.11.4/31',
+    '193.108.155.118/32',
+    '2.16.0.0/13',
+    '201.33.187.0/25',
+    '203.69.138.120/30',
+    '204.1.136.238/31',
+    '204.2.159.68/31',
+    '204.2.160.182/31',
+    '204.201.160.246/31',
+    '205.185.205.132/31',
+    '207.126.104.118/31',
+    '209.107.208.188/31',
+    '209.249.98.36/31',
+    '220.90.198.178/31',
+    '23.0.0.0/12',
+    '23.192.0.0/11',
+    '23.32.0.0/11',
+    '23.64.0.0/14',
+    '23.72.0.0/13',
+    '58.97.45.0/24',
+    '60.254.173.30/31',
+    '61.111.58.82/31',
+    '63.217.211.110/31',
+    '63.217.211.116/31',
+    '63.235.21.192/31',
+    '64.145.89.236/31',
+    '65.124.174.194/31',
+    '66.198.26.68/30',
+    '66.198.8.141/32',
+    '66.198.8.142/32',
+    '66.198.8.143/32',
+    '66.198.8.144/32',
+    '66.198.8.167/32',
+    '66.198.8.168/32',
+    '67.220.142.19/32',
+    '67.220.142.20/32',
+    '67.220.142.21/32',
+    '67.220.142.22/32',
+    '67.220.143.216/31',
+    '69.192.0.0/16',
+    '69.31.121.20/31',
+    '69.31.138.100/31',
+    '72.246.0.0/15',
+    '77.67.85.52/31',
+    '8.18.43.199/32',
+    '8.18.43.240/32',
+    '88.221.0.0/16',
+    '92.122.0.0/15',
+    '95.100.0.0/15',
+    '96.16.0.0/15',
+    '96.6.0.0/15'
+  )
+  Export-WpAzXmlAndLog -Name LoadTestIpPrefix -value @(
+    '20.237.229.98/31'
+  )
+
+  Export-WpAzXmlAndLog -Name 'TfsReleaseLink' -Value $TfsReleaseLink
+
+  if ($target -ne 'Actual') {
+    $expressServiceUrl = Export-WpAzXmlAndLog -Name 'ExpressServiceUrl' -Value "https://certtransaction.elementexpress.com/" -ReturnVariable
+  }
+  else {
+    $expressServiceUrl = Export-WpAzXmlAndLog -Name 'ExpressServiceUrl' -Value 'https://transaction.elementexpress.com' -ReturnVariable
+  }
+
+
+
+  #endregion ~~~~~~~~~~~~ EXPORT VARIABLES: GENERAL PURPOSE ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG SUBLEVELINFRA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $rgNameSubLevelInfra = Export-WpAzXmlAndLog -Name 'rgNameSubLevelInfra' -Value "SubLevelInfra" -ReturnVariable
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: WIP ~~~~~~~~~~~~~~~
+  # Export-WpAzXmlAndLog -Name 'primaryRegionAlias' -Value $regionPrimaryAlias
+  # Export-WpAzXmlAndLog -Name 'rNameStorageAccount' -Value ("tp$target$storageRgAlias$regionPrimaryAlias" + "st").ToLower()
+  # Export-WpAzXmlAndLog -Name 'ExpressAccountToken' -Value ($ExpressAccountToken | ConvertTo-SecureString -AsPlainText -Force)
+  # Export-WpAzXmlAndLog -Name 'ExpressAcceptorID' -Value $ExpressAcceptorID
+  # Export-WpAzXmlAndLog -Name 'ExpressAccountID' -Value $ExpressAccountID
+  # $rNamePrefixPrimaryRegion = ("tp-$target-$ResourceGroupAlias-$regionPrimaryAlias").ToLower()
+  # $storageRgAlias = $ResourceGroupAlias -replace '[^a-zA-Z0-9]', ''
+  # if ($storageRgAlias.length -gt 12) {
+  #   $storageRgAlias = $storageRgAlias.Substring(0, 12)
+  #   Write-Host "##vso[task.logissue type=warning]Truncating Resource Group Alias [$ResourceGroupAlias] to [$storageRgAlias] to make it 12 characters."
+  # }
+  # Export-WpAzXmlAndLog -Name 'OfficeIpAddress' -Value $OfficeIpAddress
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: WIP ~~~~~~~~~~~~~~~
+  $regionAlias = switch ($DeployToDR) {
+    'true' { $azureRegion.Secondary.alias }
+    default { $azureRegion.Primary.alias }
+  }
+  $deployRegion = switch ($DeployToDR) {
+    'true' { $azureRegion.Secondary.Name }
+    default { $azureRegion.Primary.Name }
+  }
+  Export-WpAzXmlAndLog -Name 'deployRegion' -Value $deployRegion
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: KEY VAULT ~~~~~~~~~~~~~~~
+  $rNameKeyVault = Export-WpAzXmlAndLog -Name 'rNameKeyVault' -Value "tripos-kv-shared-$target" -ReturnVariable
+  $rKeyvaults = Export-WpAzXmlAndLog -Name 'rkeyvaults' -ReturnVariable -Value  @(
+    @{
+      Name        = $rNameKeyVault
+      Location    = $azureregion.Primary.Name
+      ForceDeploy = $false
+    }
+    @{
+      Name        = "tp", $target, $azureRegion.Secondary.alias, "kv" -join '-'
+      Location    = $azureregion.Secondary.Name
+      ForceDeploy = $true
+    }
+  )
+  $newWpAzSecureStringReferenceParams = @{
+    keyVaultResourceGroupName = $rgNameSubLevelInfra
+    keyVaultName              = $rNameKeyVault
+    subscriptionId            = $subscriptionContext.Subscription.Id
+  }
+  <#Export-WpAzXmlAndLog -Name 'CertificatePasswordAdministrativeClient' -Value (ConvertTo-SecureString -String $CertificatePasswordAdministrativeClient -AsPlainText -Force)
+  Export-WpAzXmlAndLog -Name 'CertificatePasswordDataEncipherment' -Value (ConvertTo-SecureString -String $CertificatePasswordDataEncipherment -AsPlainText -Force)
+  Export-WpAzXmlAndLog -Name 'CertificatePasswordEndpointApi' -Value (ConvertTo-SecureString -String $CertificatePasswordEndpointApi -AsPlainText -Force)
+  Export-WpAzXmlAndLog -Name 'CertificatePasswordEndpointDevice' -Value (ConvertTo-SecureString -String $CertificatePasswordEndpointDevice -AsPlainText -Force)
+  Export-WpAzXmlAndLog -Name 'CertificatePasswordServiceFabricAdmin' -Value (ConvertTo-SecureString -String $CertificatePasswordServiceFabricAdmin -AsPlainText -Force)
+  Export-WpAzXmlAndLog -Name 'CertificatePasswordServiceFabricReader' -Value (ConvertTo-SecureString -String $CertificatePasswordServiceFabricReader -AsPlainText -Force)#>
+  Export-WpAzXmlAndLog -Name 'SqlPasswordAdmin' -Value @{
+    #Secure            = (ConvertTo-SecureString -String $SqlPasswordAdmin -AsPlainText -Force)
+    KeyVaultReference = (New-WpAzSecureStringReference @newWpAzSecureStringReferenceParams -secretName ('SqlAdminPassword'))
+  }
+  # Export-WpAzXmlAndLog -Name 'SqlPasswordApplication' -Value (ConvertTo-SecureString -String $SqlPasswordApplication -AsPlainText -Force)
+
+  ## Set up Azure AD Reader for Key Vault
+  $AzureADReaderSecretSecure = ConvertTo-SecureString -String $AzureADReaderSecret -AsPlainText -Force
+  $AzureReaderCredential = New-Object -typeName System.Management.Automation.PScredential ($AzureADReaderID, $AzureADReaderSecretSecure)
+  Add-AzAccount -Credential $AzureReaderCredential -Tenant $SubscriptionContext.Tenant.Id -ServicePrincipal
+
+
+  Export-WpAzXmlAndLog -Name 'keyVaultAccessPolicyReadWriteObjectIds' -Value @( # entries in this array will get read/write perms in the key vault
+    (Get-AzADServicePrincipal -DisplayName "tripos-$target").Id # the service principal
+    (Get-AzADGroup -DisplayName "triPOS DevOps").Id # the DevOps Team
+  )
+
+
+  #AccessPolicy ADX
+  $adxaccessPolicy = @(
+    @{
+      ID          = (Get-AzADGroup -DisplayName "triPOS DevOps").Id
+      DisplayName = 'triPOS Devops'
+      Role        = 'AllDatabasesAdmin'
+    },
+    @{
+      ID          = (Get-AzADGroup -DisplayName "triPOS Team").Id
+      DisplayName = 'triPOS Developers'
+      Role        = 'AllDatabasesViewer'
+    }
+  )
+
+  ## Revert to original context after Key Vault
+  Set-AzContext -Context $SubscriptionContext | Out-Null
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: KEY VAULT ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: PUBLIC IP ADDRESSES ~~~~~~~~~~~~~~~
+  $rNamePublicIpAddress = Export-WpAzXmlAndLog -ReturnVariable -Name 'rNamePublicIpAddress' -Value @(
+    "tp-$target-pip-apitmp" # Api Ip Address used temporarily for the API SubLevelInfra Traffic Manager
+    "tp-$target-pip-dgw" # Device Gateway Ip Address for Global
+    "tp-$target-uw-pipstd-dgw"
+  )
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: PUBLIC IP ADDRESSES ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: TRAFFIC MANAGER ~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'DGWLBSKU' -Value $DgwLBSkU
+
+  $rtrafficManagerAPI = Export-WpAzXmlAndLog -Name 'rTrafficManagerApi' -ReturnVariable -Value @{
+    Name         = "tripos$target"
+    EndpointName = "$($rNamePublicIpAddress[0])"
+  }
+  $sockGwPermIpName = switch ($target) { 'Lab' { "SockGw-PrimaryPermIp" } 'QA' { "SockGw-PrimaryPermIp" } default { "LBIP-SockGW" } }
+  Export-WpAzXmlAndLog -Name 'rTrafficManagerDgw' -Value @{
+    Name         = "triposdevice$target"
+    EndpointName = switch ($DgwLBSkU) {
+      'Basic' { $sockGwPermIPName }
+      'Standard' { "$($rNamePublicIpAddress[2])" }
+      default { "$($rNamePublicIpAddress[1])" }  # this will be used once we switch over to cross region Load Balancer
+    }
+  }
+  Export-WpAzXmlAndLog -Name 'rLoadBalancerDgw' -Value @{
+    Name       = "tp-$target-g-lb-dgw"
+    FrontEndIp = "$($rNamePublicIpAddress[1])"
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: TRAFFIC MANAGER ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: API MGMT SERVICE ~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rApiMgmtService' -Value @{
+    ResourceGroup = switch ($target) {
+      'DRTest' { "EastUsInfra" }
+      default { "WestUsInfra" }
+    }
+    Name          = switch ($target) {
+      'DrTest' { "tripos$($target)eastus" }
+      default { "tripos$($target)westus" }
+    }
+  }
+  Export-WpAzXmlAndLog -Name 'rtriPOSEndpointApi' -Value "tripos$target"
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: API MGMT SERVICE ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: LOGANALYTICS WORKSPACE ~~~~~~~~~~~~~~~
+  $dataRetention = @{
+    Lab    = 31
+    QA     = 31
+    UAT    = 31
+    DrTest = 31
+    Actual = 90
+  }
+  $rlogAnalytics = Export-WpAzXmlAndLog -ReturnVariable -Name 'rLogAnalytics' -Value @{
+    $azureregion.Primary.Name   = Switch ($target) {
+      'drtest' {
+        @{
+          Name              = "tp-target-$($azureregion.Primary.Alias)-loganalytics"
+          Location          = $azureregion.Primary.Name
+          ResourceGroupName = "tp-$($target)-$($azureregion.Primary.Alias)-loganalytics"
+          SkuName           = "pergb2018"
+          RetentionInDays   = $dataRetention.$target
+          WorkSpaceID       = "/subscriptions/$subscriptionId/resourcegroups/tp-$($target)-$($azureregion.Primary.Alias)-loganalytics/providers/microsoft.operationalinsights/workspaces/tp-$target-$($azureregion.Primary.Alias)-loganalytics"
+        }
+      }
+      default {
+        @{
+          Name              = "defaultworkspace-$($subscriptionId)-WUS"
+          Location          = $azureregion.Primary.Name
+          ResourceGroupName = "DefaultResourceGroup-WUS"
+          SkuName           = "pergb2018"
+          RetentionInDays   = $dataRetention.$target
+          WorkSpaceID       = "/subscriptions/$subscriptionId/resourcegroups/DefaultResourceGroup-WUS/providers/microsoft.operationalinsights/workspaces/defaultworkspace-$($subscriptionId)-WUS"
+        }
+      }
+    }
+    $azureregion.Secondary.Name = Switch ($target) {
+      'drtest' {
+        @{
+          Name              = "tp-target-$($azureregion.Secondary.Alias)-loganalytics"
+          Location          = $azureregion.Secondary.Name
+          ResourceGroupName = "tp-$($target)-$($azureregion.Secondary.Alias)-loganalytics"
+          SkuName           = "pergb2018"
+          RetentionInDays   = $dataRetention.$target
+          WorkSpaceID       = "/subscriptions/$subscriptionId/resourcegroups/tp-$($target)-$($azureregion.Secondary.Alias)-loganalytics/providers/microsoft.operationalinsights/workspaces/tp-$target-$($azureregion.Secondary.Alias)-loganalytics"
+        }
+      }
+      default {
+        @{
+          Name              = "defaultworkspace-$($subscriptionId)-EUS"
+          Location          = $azureregion.Secondary.Name
+          ResourceGroupName = "DefaultResourceGroup-EUS"
+          SkuName           = "pergb2018"
+          RetentionInDays   = $dataRetention.$target
+          WorkSpaceID       = "/subscriptions/$subscriptionId/resourcegroups/DefaultResourceGroup-EUS/providers/microsoft.operationalinsights/workspaces/defaultworkspace-$($subscriptionId)-EUS"
+        }
+      }
+    }
+  }
+
+  $diagnosticLoggingEnabledByEnvironment = @{
+    Lab     = $false
+    QA      = $false
+    UAT     = $true
+    Actual  = $true
+    Standby = $false
+    drtest  = $false
+  }
+  Export-WpAzXmlAndLog -Name 'diagnosticLoggingConfiguration' -Value @{
+    Enabled                 = $diagnosticLoggingEnabledByEnvironment[$target]
+    LogAnalyticsWorkspaceId = $rLogAnalytics.$deployRegion.WorkSpaceID
+  }
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: LOG ANALYTICS WORKSPACE ALERTS~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rLogAnalyticsWorkSpaceAlerts' -Value @{
+    queries = @{
+      "AzureDiagnostics table Ingestion Delay warning"  = "IngestionDelay"
+      "AzureDiagnostics table Ingestion Delay critical" = "IngestionDelay"
+      "WAF Response warning"                            = "WAFResponse"
+      "WAF Response critical"                           = "WAFResponse"
+      "LongRunning Status warning"                      = "LongRunningStatus"
+      "LongRunning Status critical"                     = "LongRunningStatus"
+      "Request table Ingestion Delay warning"           = "RequestIngestionDelay"
+      "Request table Ingestion Delay critical"          = "RequestIngestionDelay"
+      "Traces table Ingestion Delay warning"            = "TracesIngestionDelay"
+      "Traces table Ingestion Delay critical"           = "TracesIngestionDelay"
+      "ExpressCommError warning"                        = "ExpressCommError"
+      "ExpressCommError critical"                       = "ExpressCommError"
+      "ApprovalRate warning"                            = "ApprovalRate"
+      "ApprovalRate critical"                           = "ApprovalRate"
+      "Slow Engine Node warning"                        = "SlowEngineNode"
+      "Slow Engine Node critical"                       = "SlowEngineNode"
+      "Tripos decline critical"                         = "TriposDecline"
+      "Tripos decline warning"                          = "TriposDecline"
+      "WAF499 by akamai 5 mins"                         = "WAF499"
+      "WAF499 by akamai 60 mins"                        = "WAF499"
+      "WAF499 by akamai 1 day"                          = "WAF499"
+      "ApprovalRate incident"                           = "ApprovalRate"
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: LOG ANALYTICS WORKSPACE ALERTS~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: LOG ANALYTICS WORKSPACE ~~~~~~~~~~~~~~~
+
+  # region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: APP INSIGHTS ~~~~~~~~~~~~~~~
+  $rAppInsights = Export-WpAzXmlAndLog -ReturnVariable -Name 'rAppInsights' -Value @{
+    $azureregion.Primary.Name   = Switch ($target) {
+      'drtest' {
+        @{
+          Name                    = "tripos.$target"
+          Location                = $azureregion.Primary.Name
+          logAnalyticsWorkSpaceID = $rLogAnalytics.$($azureregion.Primary.Name).WorkSpaceID
+        }
+      }
+      default {
+        @{
+          Name                    = "tripos.$target"
+          Location                = "westus2"
+          logAnalyticsWorkSpaceID = $rLogAnalytics.$($azureregion.Primary.Name).WorkSpaceID
+        }
+      }
+    }
+    $azureregion.Secondary.Name = Switch ($target) {
+      'drtest' {
+        @{
+          Name                    = "tp-$target-$($azureregion.secondary.alias)-appinsights"
+          Location                = $azureregion.Secondary.Name
+          logAnalyticsWorkSpaceID = $rLogAnalytics.$($azureregion.Secondary.Name).WorkSpaceID
+        }
+      }
+      default {
+        @{
+          Name                    = "tp-$target-$($azureregion.secondary.alias)-appinsights"
+          Location                = $azureregion.Secondary.Name
+          logAnalyticsWorkSpaceID = $rLogAnalytics.$($azureregion.Secondary.Name).WorkSpaceID
+        }
+      }
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: APP INSIGHTS ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ EXPORT VARIABLES: ACTION GROUP ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'RActionGroup' -Value @(
+    @{
+      Name           = 'tp', $target, 'g-ag-tripos-support-warning' -join '-'
+      CommonName     = 'tp', $target, 'g-ag-tripos-support' -join '-'
+      ShortName      = 'tp', $target -join '-'
+      ResourceGroup  = $rgNameSubLevelInfra
+      EmailReceivers = @(
+        @{
+          Name  = 'Devops'
+          Email = 'devops@fisglobal.com'
+        }
+        @{
+          Name  = 'Joseph'
+          Email = 'joseph.franklin@fisglobal.com'
+        }
+      )
+    }
+    @{
+      Name           = 'tp', $target, 'g-ag-tripos-support-critical' -join '-'
+      CommonName     = 'tp', $target, 'g-ag-tripos-support' -join '-'
+      ShortName      = 'tp', $target -join '-'
+      ResourceGroup  = $rgNameSubLevelInfra
+      EmailReceivers = @(
+        @{
+          Name  = 'Devops'
+          Email = 'devops@fisglobal.com'
+        }
+        # @{
+        #   Name  = 'Express-SRE'
+        #   Email = 'ExpressSRO@fisglobal.com'
+        # }
+        @{
+          Name  = 'Joseph'
+          Email = 'joseph.franklin@fisglobal.com'
+        }
+        @{
+          Name  = 'Fred'
+          Email = 'frederick.vanden.bergh@fisglobal.com'
+        }
+      )
+    }
+    @{
+      Name           = 'tp', $target, 'g-ag-tripos-support-incident' -join '-'
+      CommonName     = 'tp', $target, 'g-ag-tripos-support' -join '-'
+      ShortName      = 'tp', $target -join '-'
+      ResourceGroup  = $rgNameSubLevelInfra
+      EmailReceivers = @(
+        @{
+          Name  = 'Devops'
+          Email = 'devops@fisglobal.com'
+        }
+        @{
+          Name  = 'Lee'
+          Email = 'Joseph.Franklin@fisglobal.com'
+        }
+        @{
+          Name  = 'Fred'
+          Email = 'Frederick.Vanden.Bergh@fisglobal.com'
+        }
+      )
+    }
+  )
+
+
+  #endregion ~~~~~~~~~~~ EXPORT VARIABLES: ACTION GROUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG SUBLEVELINFRA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~ RG NETWORKWATCHER  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $ddosPlan = @{
+    id            = "/subscriptions/e2168fe4-bd52-4b74-b453-d727f79b1a49/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/ddosProtectionPlans/tp-g-ddos-plan"
+    Location      = "WestUS"
+    ResourceGroup = "NetworkWatcherRG"
+  }
+  #endregion ~~~~~~~~~~~~ RG NETWORKWATCHER  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~ DNS RESOLVER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $dnsServers = Export-WpAzXmlAndLog -Name 'dnsServers' -ReturnVariable -Value @{
+    WestUS = @("10.57.52.4")
+    EastUS = @("10.57.52.36")
+  }
+  #endregion~~~~~~~~~~~~~~~ DNS RESOLVER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~ VWAN ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $vNetPeeringHub = Export-WpAzXmlAndLog -Name 'vNetHub' -ReturnVariable -Value @{
+    WestUS = @{
+      Name            = "TriPOS-WestHub"
+      Id              = "/subscriptions/60a55206-fdb3-4548-8405-3235b45878eb/resourceGroups/TriPOS_NetworkInfra/providers/Microsoft.Network/virtualNetworks/TriPOS-WestHub/hubvirtualNetworkConnections"
+      AddressPrefixes = @("10.57.50.0/24")
+    }
+    EastUS = @{
+      Name            = "TriPOS-EastHub"
+      Id              = "/subscriptions/60a55206-fdb3-4548-8405-3235b45878eb/resourceGroups/TriPOS_NetworkInfra/providers/Microsoft.Network/virtualNetworks/TriPOS-EastHub/hubvirtualNetworkConnections"
+      AddressPrefixes = @("10.57.51.0/24")
+    }
+  }
+  $privateDNSZones = @{
+    RedisID      = "/subscriptions/60a55206-fdb3-4548-8405-3235b45878eb/resourcegroups/tripos-dns/providers/microsoft.network/privatednszones/privatelink.redis.cache.windows.net"
+    DatabaseID   = "/subscriptions/60a55206-fdb3-4548-8405-3235b45878eb/resourceGroups/tripos-dns/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+    ServiceBusID = "/subscriptions/60a55206-fdb3-4548-8405-3235b45878eb/resourceGroups/tripos-dns/providers/Microsoft.Network/privateDnsZones/privatelink.servicebus.windows.net"
+  }
+  #endregion~~~~~~~~~~~~~~~ VWAN ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $rgData = Export-WpAzXmlAndLog -Name 'rgNameData' -Value "vantiv.tripos.$target.Data" -ReturnVariable
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL SERVER ~~~~~~~~~~~~~~~
+  $rDataSqlServer = Export-WpAzXmlAndLog -Name 'rDataSqlServer' -ReturnVariable -Value @(
+    @{
+      Target            = 'Lab'
+      Name              = 'sql-tripos-lab-cwam7rbx6nlve'
+      Location          = 'westus'
+      ForceDeploy       = 'false'
+      FailOverGroupName = 'tp', $target, 'sql-01' -join '-'
+      Tags              = @{
+        PinPadRegistry = 'Primary'
+      }
+    }
+    @{
+      Target      = 'Lab'
+      Name        = 'sql-tripos-labeastuscwa'
+      Location    = 'eastus'
+      ForceDeploy = 'false'
+      Tags        = @{
+        PinPadRegistry          = 'GeoReplica01'
+        LaneConfiguration       = 'GeoReplica01'
+        PinPadConnectionHistory = 'GeoReplica01'
+      }
+    }
+    @{
+      Target            = 'QA'
+      Name              = 'sql-tripos-qa-u46p7jz3xbmgm'
+      Location          = 'westus'
+      ForceDeploy       = 'false'
+      FailOverGroupName = 'tp', $target, 'sql-01' -join '-'
+      Tags              = @{
+        PinPadRegistry = 'Primary'
+      }
+    }
+    @{
+      Target      = 'QA'
+      Name        = 'sql-tripos-qaeastusu46p'
+      Location    = 'eastus'
+      ForceDeploy = 'false'
+      Tags        = @{
+        PinPadRegistry          = 'GeoReplica01'
+        LaneConfiguration       = 'GeoReplica01'
+        PinPadConnectionHistory = 'GeoReplica01'
+      }
+    }
+    @{
+      Target            = 'UAT'
+      Name              = 'sql-tripos-uat-iq7pflsziexyy'
+      Location          = 'westus'
+      ForceDeploy       = 'false'
+      FailOverGroupName = 'tp', $target, 'sql-01' -join '-'
+      Tags              = @{
+        PinPadRegistry = 'Primary'
+      }
+    }
+    @{
+      Target      = 'UAT'
+      Name        = 'sql-tripos-uateastusiq7'
+      Location    = 'eastus'
+      ForceDeploy = 'false'
+      Tags        = @{
+        PinPadRegistry          = 'GeoReplica01'
+        LaneConfiguration       = 'GeoReplica01'
+        PinPadConnectionHistory = 'GeoReplica01'
+      }
+    }
+    @{
+      Target            = 'Actual'
+      Name              = 'sql-tripos-actual-tqsmw44ymfzjc'
+      Location          = 'westus'
+      ForceDeploy       = 'false'
+      FailOverGroupName = 'tp', $target, 'sql-01' -join '-'
+      Tags              = @{
+        PinPadRegistry = 'Primary'
+      }
+    }
+    @{
+      Target      = 'Actual'
+      Name        = 'sql-tripos-actualeastus'
+      Location    = 'eastus'
+      ForceDeploy = 'false'
+      Tags        = @{
+        PinPadRegistry          = 'GeoReplica01'
+        LaneConfiguration       = 'GeoReplica01'
+        PinPadConnectionHistory = 'GeoReplica01'
+      }
+    }
+    @{
+      Target            = 'DrTest'
+      Name              = 'sql-tripos-drtesteastus'
+      Location          = 'eastus'
+      ForceDeploy       = 'false'
+      FailOverGroupName = 'tp', $target, 'sql-01' -join '-'
+      Tags              = @{
+        PinPadRegistry = 'Primary'
+      }
+    }
+    @{
+      Target      = 'DrTest'
+      Name        = 'sql-tripos-drtestwestus'
+      Location    = 'westus'
+      ForceDeploy = 'false'
+      Tags        = @{
+        PinPadRegistry          = 'GeoReplica01'
+        LaneConfiguration       = 'GeoReplica01'
+        PinPadConnectionHistory = 'GeoReplica01'
+      }
+    }
+    @{
+      Target            = $target
+      Name              = 'tp', $target, $azureRegion.Primary.Alias, 'sql', '02' -join '-'
+      Location          = $azureRegion.Primary.Name
+      ForceDeploy       = 'true'
+      FailOverGroupName = 'tp', $target, 'sql-02' -join '-'
+      Tags              = @{
+        PinPadRegistry          = 'GeoReplica02'
+        PinPadConnectionHistory = 'Primary'
+        LaneConfiguration       = 'Primary'
+      }
+    }
+  )
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL SERVER ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL DATABASE ~~~~~~~~~~~~~~
+  $rDataSqlDatabase = Export-WpAzXmlAndLog -Name 'rDataSqlDatabase' -ReturnVariable -Value @(
+    @{
+      Name              = 'PinPadRegistry'
+      Location          = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'Primary' }).Location
+      FailOverGroupName = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'Primary' }).FailOverGroupName
+      Server            = @{
+        Primary      = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'Primary' }).Name
+        GeoReplica01 = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'GeoReplica01' }).Name
+        GeoReplica02 = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadRegistry -eq 'GeoReplica02' }).Name
+      }
+      Sku               = @{
+        Name     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Tier     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Capacity = @{
+          DrTest = 200
+          Lab    = 10
+          QA     = 20
+          UAT    = 20
+          Actual = 200
+        }
+      }
+      ForceDeploy       = @{
+        DrTest = 'true'
+        Lab    = 'false'
+        QA     = 'false'
+        UAT    = 'false'
+        Actual = 'false'
+      }
+    }
+    @{
+      Name              = 'PinPadConnectionHistory'
+      Location          = ($rDataSqlServer | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'Primary' }).Location
+      FailOverGroupName = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'Primary' }).FailOverGroupName
+      Server            = @{
+        Primary      = ($rDataSqlServer | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'Primary' }).Name
+        GeoReplica01 = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.PinPadConnectionHistory -eq 'GeoReplica01' }).Name
+      }
+      Sku               = @{
+        Name     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Tier     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Capacity = @{
+          DrTest = 200
+          Lab    = 20
+          QA     = 20
+          UAT    = 50
+          Actual = 200
+        }
+      }
+      ForceDeploy       = @{
+        DrTest = 'true'
+        Lab    = 'true'
+        QA     = 'true'
+        UAT    = 'true'
+        Actual = 'true'
+      }
+    }
+    @{
+      Name              = 'LaneConfiguration'
+      Location          = ($rDataSqlServer | Where-Object { $_.Tags.LaneConfiguration -eq 'Primary' }).Location
+      FailOverGroupName = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.LaneConfiguration -eq 'Primary' }).FailOverGroupName
+      Server            = @{
+        Primary      = ($rDataSqlServer | Where-Object { $_.Tags.LaneConfiguration -eq 'Primary' }).Name
+        GeoReplica01 = ($rDataSqlServer | Where-Object { $_.Target -eq $target } | Where-Object { $_.Tags.LaneConfiguration -eq 'GeoReplica01' }).Name
+      }
+      Sku               = @{
+        Name     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Tier     = @{
+          DrTest = 'Standard'
+          Lab    = 'Standard'
+          QA     = 'Standard'
+          UAT    = 'Standard'
+          Actual = 'Standard'
+        }
+        Capacity = @{
+          DrTest = 20
+          Lab    = 20
+          QA     = 20
+          UAT    = 20
+          Actual = 20
+        }
+      }
+      ForceDeploy       = @{
+        DrTest = 'true'
+        Lab    = 'true'
+        QA     = 'true'
+        UAT    = 'true'
+        Actual = 'true'
+      }
+    }
+  )
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL DATABASE ~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL FAILOVER GROUP ~~~~~~~~~~
+  $uniquefailOverGroup = $RDataSqlDatabase.FailoverGroupName | sort-object | get-unique
+  $failoverGroup = @()
+  foreach ($fog in $uniquefailoverGroup) {
+    $database = @()
+    foreach ($db in ($RDataSqlDatabase | Where-Object { $_.FailoverGroupName -eq $fog })) {
+      $database += '/subscriptions/', $subscriptionId, '/resourcegroups/', $rgData, '/providers/Microsoft.Sql/servers/', $db.Server.Primary, '/databases/', $db.name -join ''
+    }
+    $failoverGroup += @{
+      Database  = $database
+      Primary   = ($RDataSqlDatabase | Where-Object { $_.FailoverGroupName -eq $fog }).Server.Primary | sort-object | get-unique
+      Secondary = ($RDataSqlDatabase | Where-Object { $_.FailoverGroupName -eq $fog }).Server.GeoReplica01 | sort-object | get-unique
+      Name      = $fog
+    }
+  }
+  Export-WpAzXmlAndLog -Name 'rDataSqlFailOverGroup' -Value $failOverGroup
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: SQL FAILOVER GROUP ~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: REDIS CACHE ~~~~~~~~~~~~~~~
+  $rDataRedisServer = Export-WpAzXmlAndLog -Name 'rDataRedisServer' -ReturnVariable -Value @{
+    $azureRegion.primary.name   = @(
+      @{
+        Target             = $target
+        Name               = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'tripos' -join '-'
+        Metadata           = 'triPOSCloud'
+        Location           = $azureRegion.Primary.Name
+        DashboardName      = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'dashboard' -join '-'
+        RedisSkuName       = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily     = 'C'
+        RedisSkuCapacity   = 0
+        ForceDeploy        = 'true'
+        Tags               = @{
+          quickChip = 'shard1'
+        }
+        KeyVaultSecretName = @{
+          Primary   = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'tripos-PrimaryConnectionString' -join '-'
+          Secondary = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'tripos-SecondaryConnectionString' -join '-'
+        }
+      }
+      @{
+        Target             = $target
+        Metadata           = 'LaneConfig'
+        Name               = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'laneconfig' -join '-'
+        DashboardName      = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'laneconfig', 'dashboard' -join '-'
+        Location           = $azureRegion.Primary.Name
+        RedisSkuName       = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily     = 'C'
+        RedisSkuCapacity   = switch ($target) { 'actual' { 1 } default { 0 } }
+        ForceDeploy        = 'true'
+        Tags               = @{
+          LaneConfig = 'shard1'
+        }
+        KeyVaultSecretName = @{
+          Primary   = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'laneconfig-PrimaryConnectionString' -join '-'
+          Secondary = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'laneconfig-SecondaryConnectionString' -join '-'
+        }
+      }
+      @{
+        Target             = $target
+        Metadata           = 'DeviceTrafficController'
+        Name               = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'devicetrafficcontroller' -join '-'
+        DashboardName      = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'devicetrafficcontroller', 'dashboard' -join '-'
+        Location           = $azureRegion.Primary.Name
+        RedisSkuName       = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily     = 'C'
+        RedisSkuCapacity   = 0
+        ForceDeploy        = 'true'
+        Tags               = @{
+          DeviceTrafficController = 'shard1'
+        }
+        KeyVaultSecretName = @{
+          Primary   = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'devicetrafficcontroller-PrimaryConnectionString' -join '-'
+          Secondary = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'devicetrafficcontroller-SecondaryConnectionString' -join '-'
+        }
+      }
+    )
+    $azureRegion.secondary.name = @(
+      @{
+        Target           = $target
+        Name             = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'tripos' -join '-'
+        Metadata         = 'triPOSCloud'
+        Location         = $azureRegion.Secondary.Name
+        RedisSkuName     = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily   = 'C'
+        RedisSkuCapacity = 0
+        DashboardName    = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'dashboard' -join '-'
+        ForceDeploy      = 'true'
+        Tags             = @{
+          tripos = 'shard1'
+        }
+      }
+      @{
+        Target             = $target
+        Metadata           = 'LaneConfig'
+        Name               = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'laneconfig' -join '-'
+        DashboardName      = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'laneconfig', 'dashboard' -join '-'
+        Location           = $azureRegion.Secondary.Name
+        RedisSkuName       = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily     = 'C'
+        RedisSkuCapacity   = switch ($target) { 'actual' { 1 } default { 0 } }
+        ForceDeploy        = 'true'
+        Tags               = @{
+          LaneConfig = 'shard1'
+        }
+        KeyVaultSecretName = @{
+          Primary   = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'laneconfig-PrimaryConnectionString' -join '-'
+          Secondary = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'laneconfig-SecondaryConnectionString' -join '-'
+        }
+      }
+      @{
+        Target             = $target
+        Metadata           = 'DeviceTrafficController'
+        Name               = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'devicetrafficcontroller' -join '-'
+        DashboardName      = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'devicetrafficcontroller', 'dashboard' -join '-'
+        Location           = $azureRegion.Secondary.Name
+        RedisSkuName       = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily     = 'C'
+        RedisSkuCapacity   = 0
+        ForceDeploy        = 'true'
+        Tags               = @{
+          DeviceTrafficController = 'shard1'
+        }
+        KeyVaultSecretName = @{
+          Primary   = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'devicetrafficcontroller-PrimaryConnectionString' -join '-'
+          Secondary = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'devicetrafficcontroller-SecondaryConnectionString' -join '-'
+        }
+      }
+    )
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: REDIS CACHE ~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: PRIVATE ENDPOINTS ~~~~~~~~~~
+  $sharedVnetAddress = Import-csv -Path "$pathTools\0.0.1\sharedvnet.csv"
+  $sharedVnetAddressSpace = $sharedVnetAddress | where-object { $_.Target -eq $target }
+
+  Export-WpAzXmlAndLog -Name 'rDataPrivateEndpoints' -Value @{
+    "WestUS" = @{
+      VirtualNetwork = @{
+        Name            = 'tp', $target, $azureRegion.primary.alias, 'shared-dataservices-vnet' -join '-'
+        Tags            = @{"Role" = "SharedDataVNet" }
+        AddressPrefix   = $sharedVnetAddressSpace.DataPrimary
+        nsg             = 'tp', $target, $azureRegion.primary.alias, 'shared-dataservices-nsg' -join '-'
+        Subnets         = @{
+          Name          = "datasubnet"
+          AddressPrefix = $sharedVnetAddressSpace.DataSubnetPrimary
+        }
+        vNetPeeringHub  = $vNetPeeringHub.$($azureRegion.Primary.Name)
+        privateDNSZones = $privateDnsZones
+        DDOSPlan        = $ddosPlan.Id
+      }
+    }
+    "EastUS" = @{
+      VirtualNetwork = @{
+        Name            = 'tp', $target, $azureRegion.secondary.alias, 'shared-dataservices-vnet' -join '-'
+        Tags            = @{"Role" = "SharedDataVNet" }
+        AddressPrefix   = $sharedVnetAddressSpace.DataSecondary
+        nsg             = 'tp', $target, $azureRegion.Secondary.alias, 'shared-dataservices-nsg' -join '-'
+        Subnets         = @{
+          Name          = "datasubnet"
+          AddressPrefix = $sharedVnetAddressSpace.DataSubnetSecondary
+
+        }
+        vNetPeeringHub  = $vNetPeeringHub.$($azureRegion.Secondary.Name)
+        privateDNSZones = $privateDnsZones
+        DDOSPlan        = $ddosPlan.Id
+      }
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: PRIVATE ENDPOINTS ~~~~~~~~~~
+
+  #endregion ~~~~~~~~~~~~ RG DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG LOGGING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if ($target -eq 'drtest') {
+    $legacyLoggingRG = "vantiv.tripos.$target.Logging"
+  }
+  else {
+    $legacyLoggingRG = "vantiv.$target.LegacyLogging"
+  }
+  $rgLegacyLogging = Export-WpAzXmlAndLog -Name 'rgLegacyLogging' -Value $legacyLoggingRG -ReturnVariable
+  $rgLogging = Export-WpAzXmlAndLog -Name 'rgLogging' -Value "tp-$target-Logging" -ReturnVariable
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: EVENT HUB ~~~~~~~~~~~~~~~~~~~
+  $LegacyEventHubDetails = @{
+    "Lab"    = @{
+      Name                         = "triposhublabfgobvo6lmdgau"
+      Capacity                     = 3
+      MessageRetentionInDays       = 3
+      ForceEventHubNameSpaceDeploy = "true"
+    }
+    "DRTest" = @{
+      Name                         = "triposhubdrtestxysbl5cg23b2s"
+      Capacity                     = 12
+      MessageRetentionInDays       = 3
+      ForceEventHubNameSpaceDeploy = "true"
+    }
+    "QA"     = @{
+      Name                         = "triposhubqarlnabjger44hy"
+      Capacity                     = 2
+      MessageRetentionInDays       = 3
+      ForceEventHubNameSpaceDeploy = "true"
+    }
+    "UAT"    = @{
+      Name                         = "triposhubuatilbprz62fg2vy"
+      Capacity                     = 16
+      MessageRetentionInDays       = 7
+      ForceEventHubNameSpaceDeploy = "true"
+    }
+    "Actual" = @{
+      Name                         = "triposhubactualranlqwdypzjho"
+      Capacity                     = 10
+      MessageRetentionInDays       = 7
+      ForceEventHubNameSpaceDeploy = "true"
+    }
+  }
+
+  $rLoggingEventHub = Export-WpAzXmlAndLog -Name  'rLoggingEventHub' -ReturnVariable -Value @{
+    $azureregion.Primary.Name   = @{
+      $target = @(
+        @{
+          Name                         = $LegacyEventHubDetails.$target.Name
+          Sku                          = "Standard"
+          Capacity                     = $LegacyEventHubDetails.$target.Capacity
+          ResourceGroupName            = $rgLegacyLogging
+          ForceEventHubNameSpaceDeploy = $LegacyEventHubDetails.$target.ForceEventHubNameSpaceDeploy
+          EventHubs                    = @(
+            @{
+              Name                   = "telemetry"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "sa-sql-pinpadconnections"
+                "sa-sql-deviceconnections"
+                "adx"
+              )
+            }
+          )
+        },
+        @{
+          Name                         = "tp", $target, $azureRegion.Primary.Alias, "eh-02" -join '-'
+          Sku                          = "Standard"
+          Capacity                     = 1
+          ResourceGroupName            = $rgLogging
+          ForceEventHubNameSpaceDeploy = 'true'
+          EventHubs                    = @(
+            @{
+              Name                   = "msBinTable"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-msbintable"
+              )
+            },
+            @{
+              Name                   = "asyncFacade"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-asyncfacade"
+              )
+            },
+            @{
+              Name                   = "msdevicetrafficcontroller"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-msdevicetrafficcontroller"
+              )
+            }
+          )
+        }
+      )
+    }
+    $azureregion.Secondary.Name = @{
+      $target = @(
+        @{
+          Name                         = "tp", $target, $azureRegion.Secondary.Alias, "eh-01" -join '-'
+          Sku                          = "Standard"
+          Capacity                     = $LegacyEventHubDetails.$target.Capacity
+          ResourceGroupName            = $rgLogging
+          ForceEventHubNameSpaceDeploy = 'true'
+          EventHubs                    = @(
+            @{
+              Name                   = "telemetry"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "sa-sql-pinpadconnections"
+                "sa-sql-deviceconnections"
+                "adx"
+              )
+            },
+            @{
+              Name                   = "msBinTable"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-msbintable"
+              )
+            },
+            @{
+              Name                   = "asyncFacade"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-asyncfacade"
+              )
+            },
+            @{
+              Name                   = "msdevicetrafficcontroller"
+              MessageRetentionInDays = $LegacyEventHubDetails.$target.MessageRetentionInDays
+              PartitionCount         = 4
+              ConsumerGroups         = @(
+                "adx-msdevicetrafficcontroller"
+              )
+            }
+          )
+        }
+      )
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: EVENT HUB ~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: STREAM ANALYTICS ~~~~~~~~~~~~
+  $rLoggingStreamAnalytics = Export-WpAzXmlAndLog -Name 'rLoggingStreamAnalytics' -ReturnVariable -Value @{
+    $azureRegion.Primary.Name   = @{
+      $target = @(
+        @{
+          Name                    = 'tp', $target, $azureRegion.Primary.Alias, "sa-sql-deviceconnections" -join '-'
+          ResourceGroupName       = $rgLogging
+          StreamingUnits          = 1
+          AccessGroup             = @{
+            NeedLegacyAccess = 'true'
+            ResourceGroup    = $rgLegacyLogging
+          }
+          StreamJobInput          = @{
+            Name              = 'eh-telemetry'
+            EventHubNameSpace = ($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+            EventHubName      = 'telemetry'
+            ConsumerGroup     = 'sa-sql-deviceconnections'
+          }
+          StreamJobOutput         = @{
+            Name     = "sql-deviceconnections"
+            Type     = "sqlconnectionString"
+            Server   = ($rDataSqlDatabase | where-object { $_.Name -eq 'PinPadConnectionHistory' }).FailOverGroupName
+            Database = 'PinPadConnectionHistory'
+            Table    = 'Device.Connection'
+          }
+          TransformationQuery     = "StreamAnalytics.Query.DeviceConnections.sql"
+          DeployStringifyFunction = $false
+          Tags                    = @{
+            Database = "PinPadConnectionHistory"
+          }
+        },
+        @{
+          Name                    = 'tp', $target, $azureRegion.Primary.Alias, "sa-sql-pinpadconnections" -join '-'
+          ResourceGroupName       = $rgLegacyLogging
+          StreamingUnits          = switch ($target) { 'Actual' { 6 } default { 1 } }
+          StreamJobInput          = @{
+            Name              = 'eh-telemetry'
+            EventHubNameSpace = ($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+            EventHubName      = 'telemetry'
+            ConsumerGroup     = 'sa-sql-pinpadconnections'
+          }
+          StreamJobOutput         = @{
+            Name     = "sql-pinpadconnections"
+            Type     = "sqlconnectionstring"
+            Server   = ($rDataSqlDatabase | where-object { $_.Name -eq 'PinPadConnectionHistory' }).FailOverGroupName
+            Database = 'PinPadConnectionHistory'
+            Table    = 'Staging.PinPadConnection'
+          }
+          DeployStringifyFunction = $false
+          TransformationQuery     = "StreamAnalytics.Query.PinPadConnections.sql"
+          Tags                    = @{
+            Database = "PinPadConnectionHistory"
+          }
+        }
+      )
+    }
+    $azureRegion.Secondary.Name = @{
+      $target = @(
+        @{
+          Name                    = 'tp', $target, $azureRegion.Secondary.Alias, "sa-sql-deviceconnections" -join '-'
+          ResourceGroupName       = $rgLogging
+          StreamingUnits          = 1
+          StreamJobInput          = @{
+            Name              = 'eh-telemetry'
+            EventHubNameSpace = ($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+            EventHubName      = 'telemetry'
+            ConsumerGroup     = 'sa-sql-deviceconnections'
+          }
+          StreamJobOutput         = @{
+            Name     = "sql-deviceconnections"
+            Type     = "sqlconnectionString"
+            Server   = ($rDataSqlDatabase | where-object { $_.Name -eq 'PinPadConnectionHistory' }).FailOverGroupName
+            Database = 'PinPadConnectionHistory'
+            Table    = 'Device.Connection'
+          }
+          TransformationQuery     = "StreamAnalytics.Query.DeviceConnections.sql"
+          DeployStringifyFunction = $false
+          Tags                    = @{
+            Database = "PinPadConnectionHistory"
+          }
+        },
+        @{
+          Name                    = 'tp', $target, $azureRegion.Secondary.Alias, "sa-sql-pinpadconnections" -join '-'
+          ResourceGroupName       = $rgLogging
+          StreamingUnits          = switch ($target) { 'Actual' { 6 } default { 1 } }
+          StreamJobInput          = @{
+            Name              = 'eh-telemetry'
+            EventHubNameSpace = ($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+            EventHubName      = 'telemetry'
+            ConsumerGroup     = 'sa-sql-pinpadconnections'
+          }
+          StreamJobOutput         = @{
+            Name     = "sql-pinpadconnections"
+            Type     = "sqlconnectionstring"
+            Server   = ($rDataSqlDatabase | where-object { $_.Name -eq 'PinPadConnectionHistory' }).FailOverGroupName
+            Database = 'PinPadConnectionHistory'
+            Table    = 'Staging.PinPadConnection'
+          }
+          DeployStringifyFunction = $false
+          TransformationQuery     = "StreamAnalytics.Query.PinPadConnections.sql"
+          Tags                    = @{
+            Database = "PinPadConnectionHistory"
+          }
+        }
+      )
+    }
+  }
+
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: STREAM ANALYTICS ~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: AUTOMATION ACCOUNT ~~~~~~~~~~
+  Export-WpAzXmlandLog -Name 'rLoggingAutomationAccount' -Value @{
+    $target = switch ($target) {
+      'DRTest' {
+        @{
+          Name          = 'tp', $target, 'uw2-aa-1' -join '-'
+          Location      = 'eastus'
+          ResourceGroup = $rgLegacyLogging
+        }
+      }
+      default {
+        @{
+          Name          = 'tp', $target, 'uw2-aa-1' -join '-'
+          Location      = 'westus2'
+          ResourceGroup = $rgLegacyLogging
+        }
+      }
+    }
+  }
+
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: AUTOMATION ACCOUNT~~~~~~~~~~~
+
+  #endregion ~~~~~~~~~~~~ RG LOGGING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG MONITORING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $rgMonitoring = Export-WpAzXmlAndLog -Name 'rgMonitoring' -Value "tp-$target-Monitoring" -ReturnVariable
+  $adxSku = @{
+    Lab    = @{
+      Name     = 'Dev(No SLA)_Standard_E2a_v4'
+      Tier     = 'Basic'
+      Capacity = 1
+    }
+    QA     = @{
+      Name     = 'Dev(No SLA)_Standard_E2a_v4'
+      Tier     = 'Basic'
+      Capacity = 1
+    }
+    DRTest = @{
+      Name     = 'Dev(No SLA)_Standard_E2a_v4'
+      Tier     = 'Basic'
+      Capacity = 1
+    }
+    UAT    = @{
+      Name     = 'Dev(No SLA)_Standard_E2a_v4'
+      Tier     = 'Basic'
+      Capacity = 1
+    }
+    Actual = @{
+      Name     = 'Standard_E16ads_v5'
+      Tier     = 'Standard'
+      Capacity = 2
+    }
+
+  }
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: ADX ~~~~~~~~~~~~~~~
+  $MonitoringADX = @{
+    Storage           = @{
+      Name              = ("tp", $target, $azureRegion.Primary.Alias, "adx" -join '').ToLower()
+      ResourceGroupName = $rgMonitoring
+      ForceDeploy       = 'true'
+      Containers        = @("kqlscripts")
+    }
+    adxAccessPolicy   = $adxAccessPolicy
+    ClusterProperties = @{
+      Sku                = $adxSku.$Target
+      EngineType         = "V3"
+      DatabaseProperties = @{
+        Name            = "adxlogsDB"
+        DelPeriod       = "P365D"
+        CachePeriod     = "P15D"
+        KustoScripts    = @(
+          @{
+            Name         = "createtable"
+            DatabaseName = "adxlogsDB"
+            File         = "Adx.Query.triposlogs.kql"
+          },
+          @{
+            Name         = "createtableasyncfacade"
+            DatabaseName = "adxlogsDB"
+            File         = "Adx.Query.asyncfacadelogs.kql"
+          },
+          @{
+            Name         = "createtablemsbintable"
+            DatabaseName = "adxlogsDB"
+            File         = "Adx.Query.msbintablelogs.kql"
+          },
+          @{
+            Name         = "createtablemsdevicetrafficcontrollerlogs"
+            DatabaseName = "adxlogsDB"
+            File         = "Adx.Query.msdevicetrafficcontrollerlogs.kql"
+          }
+        )
+        DataConnections = @(
+          @{
+            Name        = "triPosLogDataConn"
+            ScriptName  = "createtable"
+            EventHub    = @{
+              ResourceGroup = $rgLegacyLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+              Name          = 'telemetry'
+              ConsumerGroup = 'adx'
+            }
+            TableName   = "telemetry"
+            MappingRule = "telemetryMapping"
+          },
+          @{
+            Name        = "triPos", "Log", "DataConn", $azureRegion.secondary.Alias -join '-'
+            ScriptName  = "createtable"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name
+              Name          = 'telemetry'
+              ConsumerGroup = 'adx'
+            }
+            TableName   = "telemetry"
+            MappingRule = "telemetryMapping"
+          },
+          @{
+            Name        = "asyncfacadeLogDataConn"
+            ScriptName  = "createtableasyncfacade"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'asyncfacade' -in $_.EventHubs.Name }).Name
+              Name          = 'asyncfacade'
+              ConsumerGroup = 'adx-asyncfacade'
+            }
+            TableName   = "asyncfacade"
+            MappingRule = "asyncfacadeMapping"
+          },
+          @{
+            Name        = "asyncfacade", "Log", "DataConn", $azureRegion.secondary.Alias -join '-'
+            ScriptName  = "createtableasyncfacade"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'asyncfacade' -in $_.EventHubs.Name }).Name
+              Name          = 'asyncfacade'
+              ConsumerGroup = 'adx-asyncfacade'
+            }
+            TableName   = "asyncfacade"
+            MappingRule = "asyncfacadeMapping"
+          },
+          @{
+            Name        = "msbintableLogDataConn"
+            ScriptName  = "createtablemsbintable"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'msbintable' -in $_.EventHubs.Name }).Name
+              Name          = 'msbintable'
+              ConsumerGroup = 'adx-msbintable'
+            }
+            TableName   = "msbintable"
+            MappingRule = "msbintableMapping"
+          },
+          @{
+            Name        = "msbintable", "Log", "DataConn", $azureRegion.secondary.Alias -join '-'
+            ScriptName  = "createtablemsbintable"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'msbintable' -in $_.EventHubs.Name }).Name
+              Name          = 'msbintable'
+              ConsumerGroup = 'adx-msbintable'
+            }
+            TableName   = "msbintable"
+            MappingRule = "msbintableMapping"
+          },
+          @{
+            Name        = "msdevicetrafficcontrollerLogDataConn"
+            ScriptName  = "createtablemsdevicetrafficcontrollerlogs"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Primary.Name).$Target | Where-Object { 'msdevicetrafficcontroller' -in $_.EventHubs.Name }).Name
+              Name          = 'msdevicetrafficcontroller'
+              ConsumerGroup = 'adx-msdevicetrafficcontroller'
+            }
+            TableName   = "msdevicetrafficcontroller"
+            MappingRule = "msdevicetrafficcontrollerMapping"
+          },
+          @{
+            Name        = "msdevicetrafcontroller", "Log", "DataConn", $azureRegion.secondary.Alias -join '-'
+            ScriptName  = "createtablemsdevicetrafficcontrollerlogs"
+            EventHub    = @{
+              ResourceGroup = $rgLogging
+              NameSpace     = $($rLoggingEventHub.$($azureRegion.Secondary.Name).$Target | Where-Object { 'msdevicetrafficcontroller' -in $_.EventHubs.Name }).Name
+              Name          = 'msdevicetrafficcontroller'
+              ConsumerGroup = 'adx-msdevicetrafficcontroller'
+            }
+            TableName   = "msdevicetrafficcontroller"
+            MappingRule = "msdevicetrafficcontrollerMapping"
+          }
+        )
+      }
+    }
+  }
+  Export-WpAzXmlAndLog -Name 'RMonitoringADX' -ReturnVariable -Value @{
+    $azureregion.Primary.Name   = @{
+      $target     = $MonitoringADX
+      ClusterName = 'tp', $target, 'adxcluster' -join ''
+      AccessGroup = @($rgLegacyLogging, $rgLogging)
+
+    }
+    $azureregion.Secondary.Name = @{
+      $target     = $MonitoringADX
+      ClusterName = 'tp', $target, $azureRegion.Secondary.Alias, 'adxcluster' -join '-'
+      AccessGroup = @($rgLogging)
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: ADX ~~~~~~~~~~~~~~~
+
+  #endregion ~~~~~~~~~~~~ RG MONITORING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ SERVICES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~~~ SETUP HOSTING PLAN ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $hostingPlan = @{
+    msbintable            = @{
+      Sku = @{
+        Tier = @{
+          DrTest = 'Dynamic'
+          Lab    = 'Dynamic'
+          QA     = 'Dynamic'
+          UAT    = 'Dynamic'
+          Actual = 'Dynamic'
+        }
+        Name = @{
+          DrTest = 'Y1'
+          Lab    = 'Y1'
+          QA     = 'Y1'
+          UAT    = 'Y1'
+          Actual = 'Y1'
+        }
+      }
+    }
+    msdeviceregistry      = @{
+      Sku = @{
+        Tier = @{
+          DrTest = 'Dynamic'
+          Lab    = 'Dynamic'
+          QA     = 'Dynamic'
+          UAT    = 'ElasticPremium'
+          Actual = 'ElasticPremium'
+        }
+        Name = @{
+          DrTest = 'Y1'
+          Lab    = 'Y1'
+          QA     = 'Y1'
+          UAT    = 'EP1'
+          Actual = 'EP2'
+        }
+      }
+    }
+    msavailabilitymonitor = @{
+      Sku = @{
+        Tier = @{
+          DrTest = 'Dynamic'
+          Lab    = 'Dynamic'
+          QA     = 'Dynamic'
+          UAT    = 'Dynamic'
+          Actual = 'Dynamic'
+        }
+        Name = @{
+          DrTest = 'Y1'
+          Lab    = 'Y1'
+          QA     = 'Y1'
+          UAT    = 'Y1'
+          Actual = 'Y1'
+        }
+      }
+    }
+    msauth                = @{
+      Sku = @{
+        Tier = @{
+          DrTest = 'Dynamic'
+          Lab    = 'Dynamic'
+          QA     = 'Dynamic'
+          UAT    = 'Dynamic'
+          Actual = 'Dynamic'
+        }
+        Name = @{
+          DrTest = 'Y1'
+          Lab    = 'Y1'
+          QA     = 'Y1'
+          UAT    = 'Y1'
+          Actual = 'Y1'
+        }
+      }
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ SETUP HOSTING PLAN ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ SERVICES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~ RG MS-AUTH ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgmsAuth' -value ('tp', $Target, 'ms-Auth' -join '-')
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: MSAUTH ~~~~~~~~~~~~~~~~~~
+  $msAuth = Export-WpAzXmlAndLog -Name 'msAuth' -ReturnVariable -Value @{
+    $azureRegion.Primary.Name   = @{
+      RStorageAccountName = 'tp', $target, $azureRegion.Primary.Alias, "authst" -join ''
+      KeyvaultName        = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.Primary.Name }).Name
+      AppInsightsName     = $rAppInsights.$($azureRegion.Primary.Name).Name
+      rgSubLevelInfra     = $rgNameSubLevelInfra
+      RFunctionApp        = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Primary.Alias, 'asp-ms-auth' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-auth' -join '-'
+        SkuTier         = $hostingPlan.msauth.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msauth.Sku.Name.$Target
+      }
+      RRedisServer        = @{
+        Name             = 'tp', $Target, $azureRegion.Primary.Alias, 'redis-ms-auth' -join '-'
+        DashboardName    = 'tp', $target, $azureRegion.Primary.Alias, 'redis', 'ms-auth', 'dashboard' -join '-'
+        RedisSkuName     = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily   = 'C'
+        RedisSkuCapacity = 0
+        Tags             = @{
+          auth = 'shard1'
+        }
+      }
+      ExpressServiceUrl   = $expressServiceUrl
+    }
+    $azureRegion.Secondary.Name = @{
+      RStorageAccountName = 'tp', $target, $azureRegion.Secondary.Alias, "authst" -join ''
+      KeyvaultName        = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.Secondary.Name }).Name
+      AppInsightsName     = $rAppInsights.$($azureRegion.Secondary.Name).name
+      rgSubLevelInfra     = $rgNameSubLevelInfra
+      RFunctionApp        = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Secondary.Alias, 'asp-ms-auth' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-auth' -join '-'
+        SkuTier         = $hostingPlan.msauth.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msauth.Sku.Name.$Target
+      }
+      RRedisServer        = @{
+        Name             = 'tp', $Target, $azureRegion.Secondary.Alias, 'redis-ms-auth' -join '-'
+        DashboardName    = 'tp', $target, $azureRegion.Secondary.Alias, 'redis', 'ms-auth', 'dashboard' -join '-'
+        RedisSkuName     = switch ($target) { 'actual' { 'Standard' } default { 'Basic' } }
+        RedisSkuFamily   = 'C'
+        RedisSkuCapacity = 0
+        Tags             = @{
+          auth = 'shard1'
+        }
+      }
+      ExpressServiceUrl   = $expressServiceUrl
+    }
+  }
+  $AuthServiceUrl = ('https://tp', $Target, $regionAlias, 'fa-ms-auth' -join '-'), '.azurewebsites.net/api/v1/Authenticate' -join ''
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: MSAUTH ~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG MS-AUTH  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG MS-BINTABLE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgmsBinTable' -value ('tp', $Target, 'ms-BinTable' -join '-')
+  Export-WpAzXmlAndLog -Name 'RaftShareSecret' -Value (ConvertTo-SecureString -String $RaftShareSecret -AsPlainText -Force)
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: MSBINTABLE ~~~~~~~~~~~~~~~~~
+  $msBinTable = Export-WpAzXmlAndLog -Name 'msBinTable' -ReturnVariable -Value @{
+    $azureregion.Primary.Name   = @{
+      RStorageAccount           = @(
+        @{
+          Name       = 'tp', $Target, $azureRegion.Primary.Alias, 'msbinstfa' -join ''
+          metadata   = "WebJob Storage Account"
+          containers = @(
+            "azure-webjobs-hosts"
+            "azure-webjobs-secrets"
+          )
+        },
+        @{
+          Name       = 'tp', $Target, $azureRegion.Primary.Alias, 'msbinst' -join ''
+          metadata   = "BinTable Storage Account"
+          containers = @(
+            "raftbinfile"
+            "error"
+            "archive"
+            "binfilestorage"
+          )
+        }
+      )
+      RaftShareID               = $RaftShareID
+      RaftSharePath             = "\\fl1-pod-prod-nonrestricted.infovantiv.com\ELPS_Transfer"
+      RaftFileName              = "ELPS_P0OUMBTR"
+      RRaftBinFileContainerName = "raftbinfile"
+      RBinTableContainerName    = "binfilestorage"
+      RBinTableFileName         = "BinFiles.tar.gz"
+      REventHub                 = "msbintable"
+      KeyvaultName              = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.Primary.Name }).Name
+      AppInsightsName           = $rAppInsights.$($azureregion.Primary.Name).Name
+      rgSubLevelInfra           = $rgNameSubLevelInfra
+      RFunctionApp              = @{
+        HostingPlanName    = 'tp', $Target, $azureRegion.Primary.Alias, 'asp-ms-bintable' -join '-'
+        FunctionAppName    = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-bintable' -join '-'
+        SkuTier            = $hostingPlan.msbintable.Sku.Tier.$Target
+        SkuName            = $hostingPlan.msbintable.Sku.Name.$Target
+        KeyVaultSecretName = @{
+          MasterKey  = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-bintable-MasterKey' -join '-'
+          DefaultKey = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-bintable-DefaultKey' -join '-'
+        }
+      }
+      AuthServiceUrl            = ('https://tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-auth' -join '-'), '.azurewebsites.net/api/v1/Authenticate' -join ''
+      ActionGroup               = @{
+        Name           = 'tp', $target, 'g-ag-ms-BinTable' -join '-'
+        ShortName      = "bintable-ag"
+        EmailReceivers = @(
+          @{
+            Name  = 'Devops'
+            Email = 'devops@fisglobal.com'
+          }
+          @{
+            Name  = 'triPOS-Developers'
+            Email = 'AzureDevAlerts@fisglobal.com'
+          }
+          @{
+            Name  = 'Express-SRE'
+            Email = 'ExpressSRO@fisglobal.com'
+          }
+        )
+      }
+    }
+    $azureregion.Secondary.Name = @{
+      RStorageAccount           = @(
+        @{
+          Name       = 'tp', $Target, $azureRegion.secondary.Alias, 'msbinstfa' -join ''
+          metadata   = "WebJob Storage Account"
+          containers = @(
+            "azure-webjobs-hosts"
+            "azure-webjobs-secrets"
+          )
+        },
+        @{
+          Name       = 'tp', $Target, $azureRegion.secondary.Alias, 'msbinst' -join ''
+          metadata   = "BinTable Storage Account"
+          containers = @(
+            "raftbinfile"
+            "error"
+            "archive"
+            "binfilestorage"
+          )
+        }
+      )
+      RaftShareID               = $RaftShareID
+      RaftSharePath             = "\\fl1-pod-prod-nonrestricted.infovantiv.com\ELPS_Transfer"
+      RaftFileName              = "ELPS_P0OUMBTR"
+      RRaftBinFileContainerName = "raftbinfile"
+      RBinTableContainerName    = "binfilestorage"
+      RBinTableFileName         = "BinFiles.tar.gz"
+      REventHub                 = "msbintable"
+      KeyvaultName              = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.secondary.Name }).Name
+      AppInsightsName           = $rAppInsights.$($azureregion.Secondary.Name).Name
+      rgSubLevelInfra           = $rgNameSubLevelInfra
+      RFunctionApp              = @{
+        HostingPlanName    = 'tp', $Target, $azureRegion.Secondary.Alias, 'asp-ms-bintable' -join '-'
+        FunctionAppName    = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-bintable' -join '-'
+        SkuTier            = $hostingPlan.msbintable.Sku.Tier.$Target
+        SkuName            = $hostingPlan.msbintable.Sku.Name.$Target
+        KeyVaultSecretName = @{
+          MasterKey  = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-bintable-MasterKey' -join '-'
+          DefaultKey = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-bintable-DefaultKey' -join '-'
+        }
+      }
+      AuthServiceUrl            = ('https://tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-auth' -join '-'), '.azurewebsites.net/api/v1/Authenticate' -join ''
+      ActionGroup               = @{
+        Name           = 'tp', $target, 'g-ag-ms-BinTable' -join '-'
+        ShortName      = "bintable-ag"
+        EmailReceivers = @(
+          @{
+            Name  = 'Devops'
+            Email = 'devops@fisglobal.com'
+          }
+          @{
+            Name  = 'triPOS-Developers'
+            Email = 'AzureDevAlerts@fisglobal.com'
+          }
+          @{
+            Name  = 'Express-SRE'
+            Email = 'ExpressSRO@fisglobal.com'
+          }
+        )
+      }
+    }
+  }
+  #region ~~~~~~~~~~~~~~ EXPORT VARIABLES: MSBINTABLE ALERTS ~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'msBinTableAlerts' -ReturnVariable -Value @{
+    queries = @{
+      "Trigger-On-BinFileTransform-Failure"    = "Trigger-On-BinFileTransform-Failure"
+      "GetBinTableFile Failures warning"       = "GetBinTableFileFailures"
+      "GetBinTableFile Failures critical"      = "GetBinTableFileFailures"
+      "GetBinTableFileCloud Failures warning"  = "GetBinTableFileCloudFailures"
+      "GetBinTableFileCloud Failures critical" = "GetBinTableFileCloudFailures"
+    }
+  }
+  #endregion ~~~~~~~~~~~ EXPORT VARIABLES: MSBINTABLE ALERTS ~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: MSBINTABLE ~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG MS-BINTABLE  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG MS-AvailabilityMonitor ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgmsAvailabilityMonitor' -value ('tp', $Target, 'ms-AvailabilityMonitor' -join '-')
+
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: MSAvailabilityMonitor ~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'msAvailabilityMonitor' -Value @{
+    $azureregion.Primary.Name   = @{
+      RStorageAccount = @{
+        Name       = 'tp', $Target, $azureRegion.Primary.Alias, 'monitorstfa' -join ''
+        metadata   = "WebJob Storage Account"
+        containers = @(
+          "azure-webjobs-hosts"
+          "azure-webjobs-secrets"
+        )
+      }
+      KeyvaultName    = $rkeyvaults[0].Name
+      AppInsightsName = $rappInsights.$($azureregion.Primary.Name).Name
+      rgSubLevelInfra = $rgNameSubLevelInfra
+      RFunctionApp    = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Primary.Alias, 'asp-ms-AvailabilityMonitor' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-ms-AvailabilityMonitor' -join '-'
+        SkuTier         = $hostingPlan.msAvailabilityMonitor.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msAvailabilityMonitor.Sku.Name.$Target
+        APIUrl          = switch ($Target) {
+          'UAT' { 'https://triposcert.vantiv.com' }
+          'actual' { 'https://tripos.vantiv.com' }
+          default { 'https://', $rtrafficManagerAPI.Name, '.vantiv.com' -join '' }
+        }
+      }
+    }
+    $azureregion.Secondary.Name = @{
+      RStorageAccount = @{
+        Name       = 'tp', $Target, $azureRegion.secondary.Alias, 'monitorstfa' -join ''
+        metadata   = "WebJob Storage Account"
+        containers = @(
+          "azure-webjobs-hosts"
+          "azure-webjobs-secrets"
+
+        )
+      }
+      KeyvaultName    = $rKeyvaults[1].Name
+      AppInsightsName = $rappInsights.$($azureregion.Secondary.Name).Name
+      rgSubLevelInfra = $rgNameSubLevelInfra
+      RFunctionApp    = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Secondary.Alias, 'asp-ms-AvailabilityMonitor' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-ms-AvailabilityMonitor' -join '-'
+        SkuTier         = $hostingPlan.msAvailabilityMonitor.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msAvailabilityMonitor.Sku.Name.$Target
+        APIUrl          = switch ($Target) {
+          'UAT' { 'https://triposcert.vantiv.com' }
+          'actual' { 'https://tripos.vantiv.com' }
+          default { 'https://', $rtrafficManagerAPI.Name, '.vantiv.com' -join '' }
+        }
+      }
+    }
+
+  }
+
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: MSAvailabilityMonitor ~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG MS-AvailabilityMonitor  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG MS-DEVICEREGISTRY ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgmsDeviceRegistry' -value ('tp', $Target, $azureRegion.Primary.Alias, 'Services' -join '-')
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: MSDEVICEREGISTRY ~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'msDeviceRegistry' -Value @{
+    trafficManager              = 'tp', $target, 'g-ms-deviceregistry' -join '-'
+    $azureRegion.Primary.Name   = @{
+      RStorageAccountName = 'tp', $Target, $azureRegion.Primary.Alias, 'services' -join ''
+      KeyvaultName        = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.primary.Name }).Name
+      AppInsightsName     = $rAppInsights.$deployRegion.Name
+      rgSubLevelInfra     = $rgNameSubLevelInfra
+      RFunctionApp        = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Primary.Alias, 'asp-services' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Primary.Alias, 'fa-deviceregistry' -join '-'
+        SkuTier         = $hostingPlan.msdeviceregistry.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msdeviceregistry.Sku.Name.$Target
+      }
+      RRedisServer        = @{
+        Name = ($rDataRedisServer.$deployRegion | where-Object { ($_.Target -eq $Target) -and ($_.Metadata -eq 'triPOSCloud') }).Name
+      }
+      DatabaseName        = "PinPadConnectionHistory"
+    }
+    $azureRegion.Secondary.Name = @{
+      RStorageAccountName = 'tp', $Target, $azureRegion.Secondary.Alias, 'stdeviceregfa' -join ''
+      KeyvaultName        = ($rKeyvaults | Where-Object { $_.Location -eq $azureRegion.secondary.Name }).Name
+      AppInsightsName     = $rAppInsights.$($azureregion.Secondary.Name).Name
+      rgSubLevelInfra     = $rgNameSubLevelInfra
+      RFunctionApp        = @{
+        HostingPlanName = 'tp', $Target, $azureRegion.Secondary.Alias, 'asp-fa-deviceregistry' -join '-'
+        FunctionAppName = 'tp', $Target, $azureRegion.Secondary.Alias, 'fa-deviceregistry' -join '-'
+        SkuTier         = $hostingPlan.msdeviceregistry.Sku.Tier.$Target
+        SkuName         = $hostingPlan.msdeviceregistry.Sku.Name.$Target
+      }
+      RRedisServer        = @{
+        # this will need to be changed after redis MR is implemented post laneconfig is deployed
+        Name = ($rDataRedisServer.$deployRegion | where-Object { ($_.Target -eq $Target) -and ($_.Metadata -eq 'triPOSCloud') }).Name
+      }
+      DatabaseName        = "PinPadConnectionHistory"
+    }
+  }
+
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: MSDEVICEREGISTRY ~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG MS-DEVICEREGISTRY  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+  #region ~~~~~~~~~~~~~~~ RG APP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  $rgApp = Export-WpAzXmlAndLog -Name "rgApp" -ReturnVariable -Value @{
+    Name     = "tp-$target-$regionAlias-$ResourceGroupAlias-App"
+    Location = $deployRegion
+  }
+
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: SERVICE FABRIC CLUSTER ~~~~~~~~~
+  $rgAliasLowerCase = $ResourceGroupAlias.ToLower()
+  $customExtStorageAccount = "bastionext$target".toLower()
+  $resourceGroupAliasHash = (Get-WpStringHash -StringToHash $rgAliasLowerCase).substring(0, 6)
+  $addressSpace = Get-vNetAddressSpace -Subscription $target -rgApp $rgApp
+  #  Export-WpAzXmlAndLog -Name 'addressSpace' -Value $addressSpace
+  $rAppServiceFabric = Export-WpAzXmlAndLog -Name 'rAppServiceFabric' -ReturnVariable -Value @{
+    Keyvault             = @{
+      Name          = ($rKeyvaults | Where-Object { $_.Location -eq $deployRegion }).Name
+      ResourceGroup = $rgNameSubLevelInfra
+    }
+    CustomExtension      = @{
+      ScriptName     = "DisableTripleDES.ps1"
+      StorageAccount = $customExtStorageAccount
+      FileUri        = "https://$customExtStorageAccount.blob.core.windows.net/$customExtStorageAccount/DisableTripleDES.ps1"
+    }
+    VMSS                 = @(
+      @{
+        Name               = $rgAliasLowerCase, $regionAlias, 'api' -join '-'
+        ComputerNamePrefix = "api", $resourceGroupAliasHash -join ''
+        VMImageSKU         = $VMImage
+        DurabilityLevel    = if ($APINodeCount -ge 5) { 'Silver' } else { 'Bronze' }
+        SKU                = @{
+          Name     = $APIVMSkuSize
+          Tier     = "Standard"
+          Capacity = $APINodeCount
+        }
+        NSG                = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'nsg-api' -join '-'
+        LoadBalancer       = @{
+          Name            = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'lb-api' -join '-'
+          OutboundSnat    = $true
+          SKU             = @{
+            Name = "Standard"
+            Tier = "Regional"
+          }
+          Tags            = @{
+            Role     = "API"
+            Instance = $ResourceGroupAlias
+          }
+          PublicIpAddress = 'tp', $target, $regionAlias, $rgAliasLowerCase, "pip-api" -join '-'
+          Rules           = @(
+            @{
+              Name         = "FabricGateway"
+              FrontendPort = 19000
+              BackEndPort  = 19000
+              BackendPool  = "SysPool"
+            }
+            @{
+              Name         = "FabricHttpGateway"
+              FrontendPort = 19080
+              BackEndPort  = 19080
+              BackendPool  = "SysPool"
+            }
+            @{
+              Name         = "triPOSEndpointApi"
+              FrontendPort = 443
+              BackEndPort  = 443
+              BackendPool  = "DefaultPool"
+            }
+          )
+        }
+        Tags               = @{
+          Role     = "API"
+          Instance = $ResourceGroupAlias
+        }
+      }
+      @{
+        Name               = $rgAliasLowerCase, $regionAlias, 'eng' -join '-'
+        ComputerNamePrefix = "eng", $resourceGroupAliasHash -join ''
+        NSG                = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'nsg-eng' -join '-'
+        VMImageSKU         = $VMImage
+        DurabilityLevel    = if ($engNodeCount -ge 5) { 'Silver' } else { 'Bronze' }
+        SKU                = @{
+          Name     = $EngVMSkuSize
+          Tier     = "Standard"
+          Capacity = $EngNodeCount
+        }
+        Tags               = @{
+          Role     = "Engine"
+          Instance = $ResourceGroupAlias
+        }
+      }
+      @{
+        Name               = $rgAliasLowerCase, $regionAlias, 'dgw' -join '-'
+        ComputerNamePrefix = "dgw", $resourceGroupAliasHash -join ''
+        NSG                = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'nsg-dgw' -join '-'
+        VMImageSKU         = $VMImage
+        DurabilityLevel    = if ($dgwNodeCount -ge 5) { 'Silver' } else { 'Bronze' }
+        SKU                = @{
+          Name     = $DGWVMSkuSize
+          Tier     = "Standard"
+          Capacity = $DGWNodeCount
+        }
+        LoadBalancer       = @{
+          Name            = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'lb-dgw' -join '-'
+          OutboundSnat    = $false
+          SKU             = @{
+            Name = switch ($DgwLBSku) { 'Basic' { 'Basic' }  default { 'Standard' } }
+            Tier = "Regional"
+          }
+          PublicIpAddress = 'tp', $target, $regionAlias, $rgAliasLowerCase, "pip-dgw" -join '-'
+          Rules           = @(
+            @{
+              Name         = "triPOSEndpointDevice-9001-9001"
+              FrontendPort = 9001
+              BackEndPort  = 9001
+              BackendPool  = "DefaultPool"
+            }
+            @{
+              Name         = "triPOSEndpointDevice-443-9002"
+              FrontendPort = 443
+              BackEndPort  = 9002
+              BackendPool  = "DefaultPool"
+            }
+          )
+          Tags            = @{
+            Role     = "DGW"
+            Instance = $ResourceGroupAlias
+          }
+        }
+        Tags               = @{
+          Role     = "DGW"
+          Instance = $ResourceGroupAlias
+        }
+      }
+      @{
+        Name               = $rgAliasLowerCase, $regionAlias, 'sys' -join '-'
+        ComputerNamePrefix = "sys", $resourceGroupAliasHash -join ''
+        VMImageSKU         = $VMImage
+        DurabilityLevel    = if ($SysNodeCount -ge 5) { 'Silver' } else { 'Bronze' }
+        SKU                = @{
+          Name     = $SysVMSkuSize
+          Tier     = "Standard"
+          Capacity = $sysNodeCount
+        }
+        NSG                = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'nsg-sys' -join '-'
+        Rules              = @(
+          @{
+            Name         = "FabricGateway"
+            FrontendPort = 19000
+            BackEndPort  = 19000
+          }
+          @{
+            Name         = "FabricHttpGateway"
+            FrontendPort = 19080
+            BackEndPort  = 19080
+          }
+        )
+        Tags               = @{
+          Role     = "sys"
+          Instance = $ResourceGroupAlias
+        }
+      }
+    )
+    DashboardName        = 'tp', $target, $rgAliasLowerCase, $regionAlias, 'servicefabric', 'dashboard' -join '-'
+    StorageAccount       = @(
+      @{
+        Name = ($target, $regionAlias, $resourceGroupAliasHash, 'diag' -join '').ToLower()
+        Tags = @{
+          Role = "SF-Diagnostics"
+        }
+      }
+      @{
+        Name = ($target, $regionAlias,
+          $resourceGroupAliasHash, 'logs' -join '').ToLower()
+        Tags = @{
+          Role = "SF-Logs"
+        }
+      },
+      @{
+        Name = ($target, $regionAlias, $resourceGroupAliasHash, 'nsg' -join '').ToLower()
+        Tags = @{
+          Role = "NSG-Logs"
+        }
+      }
+    )
+    VirtualNetwork       = @{
+      Name           = 'tp', $target, $regionAlias, $rgAliasLowerCase, "sf-vnet" -join '-'
+      DDOSPlan       = $ddosPlan.Id
+      dnsServers     = $dnsServers.$deployRegion
+      vNetPeeringHub = $vNetPeeringHub.$deployRegion
+      AddressPrefix  = $addressSpace.VnetAddressSpace
+      Tags           = @{
+        Instance = $resourceGroupAlias
+      }
+      NatGateway     = 'tp', $target, $regionAlias, $rgAliasLowerCase, "outbound-nat-gw" -join '-'
+      PublicIpPrefix = 'tp', $target, $regionAlias, $rgAliasLowerCase, "outbound-nat-pip-prefix" -join '-'
+      Subnets        = @(
+        @{
+          Name          = "API"
+          AddressPrefix = $addressSpace.API
+        }
+        @{
+          Name          = "Eng"
+          AddressPrefix = $addressSpace.Engine
+        }
+        @{
+          Name          = "DGW"
+          AddressPrefix = $addressSpace.DGW
+        }
+        @{
+          Name          = "AzureBastionSubnet"
+          AddressPrefix = $addressSpace.Bastion
+        }
+      )
+    }
+    ServiceFabricCluster = @{
+      Name    = 'tp', $target, $regionAlias, $rgAliasLowerCase, "sf-cluster" -join '-'
+      Version = $SFClusterCodeVersion
+      Tags    = @{
+        Instance = $ResourceGroupAlias
+      }
+    }
+    ServiceBus           = @{
+      Name               = 'tp', $target, $regionAlias, $rgAliasLowerCase, "sbus" -join '-'
+      SKU                = @{
+        Name     = "Standard"
+        Tier     = "Standard"
+        Capacity = 1
+      }
+      Queue              = @(
+        @{
+          Name = "file-transfer-request"
+          TTL  = "P1D"
+        }
+        @{
+          Name = "file-transfer-response"
+          TTL  = "P1D"
+        }
+        @{
+          Name = "file-transfer-abort-request"
+          TTL  = "P1D"
+        }
+        @{
+          Name = "file-transfer-complete"
+          TTL  = "P1D"
+        }
+        @{
+          Name = "async-http-request"
+          TTL  = "PT8H"
+        }
+        @{
+          Name = "async-http-complete"
+          TTL  = "PT8H"
+        }
+      )
+      KeyVaultSecretName = @{
+        Primary = 'ServiceBus-ConnectionString', 'tp', $target, $regionAlias, $rgAliasLowerCase, 'sbus-Manage' -join '-'
+      }
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: SERVICE FABRIC CLUSTER ~~~~~~~~~
+
+  #endregion ~~~~~~~~~~~~ RG APP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #region ~~~~~~~~~~~~~~~ RG EDGE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgEdge' -Value @{
+    Name     = "tp-$target-$regionAlias-$ResourceGroupAlias-Edge"
+    Location = $deployRegion
+  }
+  #region   ~~~~~~~~~~~~~~~ EXPORT VARIABLES: APPLICATION GATEWAY  ~~~~~~~~~
+  $APIFqdn = switch ($Target) {
+    'UAT' { 'triposcert.vantiv.com' }
+    'actual' { 'tripos.vantiv.com' }
+    default { $rtrafficManagerAPI.Name, '.vantiv.com' -join '' }
+  }
+  Export-WpAzXmlAndLog -Name 'rAppGw' -Value @{
+    Keyvault                = @{
+      Name          = $rnameKeyVault
+      ResourceGroup = $rgNameSubLevelInfra
+    }
+    Gateway                 = @{
+      Name = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'appgw' -join '-'
+      SKU  = @{
+        Name     = "WAF_v2"
+        tier     = "WAF_v2"
+        capacity = switch ($target) { 'actual' { 4 } default { 1 } }
+      }
+    }
+    LogAnalyticsWorkspaceId = $rLogAnalytics.$deployRegion.WorkSpaceID
+
+    triposFqdn              = $APIFqdn
+    msBintableFqdn          = $msBinTable.$deployRegion.RfunctionApp.FunctionAppName, "azurewebsites.net" -join '.'
+    NSG                     = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'nsg-appgw' -join '-'
+    PublicIpAddress         = @{
+      Name = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'pip-appgw' -join '-'
+      SKU  = @{
+        Name = "Standard"
+        Tier = "Regional"
+      }
+    }
+    StorageAccount          = @{
+      Name = ($target, $regionAlias, $resourceGroupAliasHash, 'nsgag' -join '').ToLower()
+      Tags = @{
+        Role = "NSG-Logs"
+      }
+    }
+
+    VirtualNetwork          = @{
+      Name          = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'vnet-appgw' -join '-'
+      DDOSPlan      = $ddosPlan.Id
+      AddressPrefix = @(
+        $addressSpace.AppgwVnet
+      )
+      Subnets       = @(
+        @{
+          Name          = "AppGw"
+          AddressPrefix = $addressSpace.Appgw
+        }
+        @{
+          Name          = "AppService"
+          AddressPrefix = $addressSpace.AppService
+        }
+      )
+    }
+    Tags                    = @{
+      Role     = "AppGW"
+      Instance = $ResourceGroupAlias
+    }
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: APPLICATION GATEWAY  ~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: TRAFFIC MANAGER   ~~~~~~~~~~~~
+  $rTrafficManager = Export-WpAzXmlAndLog -Name 'rTrafficManager' -ReturnVariable -Value @(
+    @{
+      Name             = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'tm-api' -join '-'
+      Protocol         = 'https'
+      Port             = 443
+      Path             = '/api/help/'
+      TargetResourceId = ''
+      CustomHeaders    = @()
+    }
+    @{
+      Name             = 'tp', $target, $regionAlias, $rgAliasLowerCase, 'tm-dgw' -join '-'
+      Protocol         = 'TCP'
+      Port             = '9001'
+      Path             = ''
+      TargetResourceId = ''
+      CustomHeaders    = @()
+    }
+  )
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: TRAFFIC MANAGER   ~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG EDGE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: TRIPOS CLOUD APPLICATION ~~~~~
+  Export-WpAzXmlAndLog -Name 'AppDeployParameters' -Value @{
+    KeyvaultName                     = ($rKeyvaults | Where-Object { $_.Location -eq $deployRegion }).Name
+    ExpressUrl                       = $expressServiceUrl
+    AuthServiceUrl                   = $AuthServiceUrl
+    BinTableUrl                      = 'https://', ('tp', $Target, $regionAlias, 'fa-ms-bintable' -join '-'), '.azurewebsites.net/service/bintable/GetBinTableFileCloud' -join ''
+    BintableAuth                     = $msBintable.$deployRegion.RfunctionApp.KeyVaultSecretName.DefaultKey
+    ServiceBus                       = $rAppServiceFabric.ServiceBus.KeyVaultSecretName.Primary
+    CacheConnection                  = ($rDataRedisServer.$deployRegion | Where-Object { ($_.target -eq $target) -and ($_.Metadata -eq 'triPOSCloud') }).Name, '-PrimaryConnectionString' -join ''
+    telemetryEventHubNameSpace       = 'EventHubNameSpace-ConnectionString', ($rLoggingEventHub.$deployRegion.$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name, 'Root' -join '-'
+    AsyncEventHubNameSpace           = 'EventHubNameSpace-ConnectionString', ($rLoggingEventHub.$deployRegion.$Target | Where-Object { 'asyncFacade' -in $_.EventHubs.Name }).Name, 'Root' -join '-'
+    ForwardTriPOSAddressAsync        = ($rTrafficManager | Where-Object { $_.Name -like '*api*' }).Name
+    LaneConfigCacheConnectionString  = ($rDataRedisServer.$deployRegion | Where-Object { ($_.target -eq $target) -and ($_.metadata -eq 'LaneConfig') }).KeyvaultSecretName.Primary
+    LaneLockingCacheConnectionString = ($rDataRedisServer.$deployRegion | Where-Object { ($_.target -eq $target) -and ($_.metadata -eq 'DeviceTrafficController') }).KeyvaultSecretName.Primary
+    useLaneConfigService             = $UseLaneConfigService
+    mockExpress                      = $mockExpress
+    useAuthService                   = $useAuthService
+    useLaneLockingService            = $useLaneLockingService
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES:  TRIPOS CLOUD APPLICATION ~~~~
+  #region ~~~~~~~~~~~~~~~ RG BASTION ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Export-WpAzXmlAndLog -Name 'rgBastion' -Value "tp-$target-$regionAlias-$ResourceGroupAlias-Bastion"
+  #region ~~~~~~~~~~~~~~~~~ EXPORT VARIABLES: RBASTION~~~~~~~~~~~~~~~~~~~~~~
+
+  $vmPrefix = 'tp', $target, $regionAlias, $resourceGroupAlias -join '-'
+  $nsg = $rAppServiceFabric.VMSS.NSG | where-Object { $_ -like '*dgw' }
+  Export-WpAzXmlAndLog -Name 'rBastion' -Value @{
+    Location                  = $deployRegion
+    rgSubLevelInfra           = $rgNameSubLevelInfra
+    ParentResourceGroup       = $rgApp.Name
+    StorageAccount            = ('bastionext', $target -join '').toLower()
+    AvailabilitySetName       = $vmPrefix, 'as' -join '-'
+    VirtualMachine            = @{
+      AdminSecret    = New-WpAzSecureStringReference @newWpAzSecureStringReferenceParams -SecretName "FabricAdmin-$target"
+      StorageAccount = ($target, $regionAlias, $resourceGroupAliasHash, 'bhdiag' -join '').ToLower()
+      VmName         = $vmPrefix, 'vm' -join '-'
+      Disk           = $vmPrefix, 'vm-disk' -join '-'
+      NIC            = $vmPrefix, 'vm-nic' -join '-'
+      Bastion        = $vmPrefix, 'bastion' -join '-'
+      PIP            = ($vmPrefix, 'bastion-pip' -join '-').toLower()
+      Count          = 1
+    }
+    SubnetRef                 = '/subscriptions/', $subscriptionId, '/resourceGroups/', $rgApp.Name, '/providers/Microsoft.Network/virtualNetworks/', $rAppServiceFabric.VirtualNetwork.Name, '/subnets/DGW' -join ''
+    NetworkSecurityGroupRefId = '/subscriptions/', $subscriptionId, '/resourceGroups/', $rgApp.Name, '/providers/Microsoft.Network/networkSecurityGroups/', $nsg -join ''
+    BastionSubnetRef          = '/subscriptions/', $subscriptionId, '/resourceGroups/', $rgApp.Name, '/providers/Microsoft.Network/virtualNetworks/', $rAppServiceFabric.VirtualNetwork.Name, '/subnets/AzureBastionSubnet' -join ''
+  }
+  #endregion ~~~~~~~~~~~~~~ EXPORT VARIABLES: RBASTION~~~~~~~~~~~~~~~~~~~~~~
+  #endregion ~~~~~~~~~~~~ RG BASTION ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+}
+catch {
+  $message = $_.Exception.Message
+  $position = $_.InvocationInfo.PositionMessage.Split('+')[0].Trim()
+  Write-Verbose "ERROR MESSAGE: [$message]"
+  Write-Verbose "ERROR POSITION: [$position]"
+  Throw "[$message] [$position]"
+}
+finally {
+  # $InformationPreference = $InformationPreferenceBackup
+}
+
+#endregion ~~~~~~~~~~~~ SCRIPT BODY ~~~~~~~~~~~~~~
