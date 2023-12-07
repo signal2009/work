@@ -81,6 +81,7 @@ try {
         CacheConnection                         = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.CacheConnection
         EventHubAppenderConnectionString        = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
         ServiceBusConnectionString              = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.ServiceBus
+        AppConfigurationConnectionString        = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.AppConfiguration
         PinpadConnectionHistoryConnectionString = Invoke-WpSfEncryptSecret @params -SecretName 'Database-ConnectionString-PinPadConnectionHistory-FOG-App'
         #LaneLockingCacheConnectionString       = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.LaneLockingCacheConnectionString
 
@@ -102,6 +103,7 @@ try {
         DeviceTLSCertificateThumbprint        = (Get-AzKeyVaultCertificate -VaultName $keyVaultName -Name "EndpointDevice-$Target").Thumbprint
         ApplicationInsightsInstrumentationKey = Invoke-WpSfEncryptSecret @params -SecretName 'ApplicationInsightsInstrumentationKey'
         EventHubAppenderConnectionString      = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.telemetryEventHubNameSpace
+        AppConfigurationConnectionString        = Invoke-WpSfEncryptSecret @params -SecretName $AppDeployParameters.AppConfiguration
         ResourceGroupName                     = $ResourceGroupAlias
       }
     }
