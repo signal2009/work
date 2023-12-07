@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appConfiguration": {
+            "value": "tp-demo-appconfig1"
+        },
+        "location": {
+            "value": "westus"
+        },
+        "apiVersion": {
+            "value": "2023-03-01"
+        },
+        "sku": {
+            "value": "standard"
+        },
+        "tags": {
+            "value": {}
+        },
+        "softDeleteRetentionInDays": {
+            "value": 7
+        },
+        "enablePurgeProtection": {
+            "value": false
+        },
+        "disableLocalAuth": {
+            "value": false
+        },
+        "keyVault": {
+            "value": {}
+        }
+    }
+}
