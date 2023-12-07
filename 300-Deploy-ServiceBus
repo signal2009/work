@@ -1,0 +1,78 @@
+<#
+  .SYNOPSIS
+  Deploys the Azure resource Service Bus
+
+  .DESCRIPTION
+  Deploys the Azure resource Service Bus
+
+  .PARAMETER Target
+  The Azure Subscription Alias that is targeted by this script.
+
+  .PARAMETER AzureRegion
+  The Azure Region where the deployment is targetting.
+
+  .PARAMETER RgApp
+  The name  and location of the resource group where the resource deployed by this script will be deployed into.
+
+  .PARAMETER AppServiceFabric
+  Hashtable containing details of Service fabric resources
+
+  .PARAMETER Keyvaults
+  Array of keyvault hashtable with details on primary and secondary keyvault
+
+  .PARAMETER rgSublevelInfra
+  ResourceGroup of SublevelInfra where keyvault exists
+
+  .PARAMETER PathTools
+  The path to the tools to use for this script. (Deploy-ArmTemplate.ps1, etc)
+
+  .PARAMETER DeploymentOptionalParameters
+  Optional paramaters hashtable that can be passed to override the default behaviour of the ARM template deployment.
+
+  .EXAMPLE
+  $(System.DefaultWorkingDirectory)\Pipeline\RG\App\300-Deploy-ServiceBus.ps1
+
+  Running from TFS.
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param(
+  [string]$Target = (Import-Clixml "$env:System_DefaultWorkingDirectory\Target.xml"),
+  [HashTable]$AzureRegion = (Import-Clixml "$env:System_DefaultWorkingDirectory\AzureRegion.xml"),
+  [HashTable]$RgApp = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgApp.xml"),
+  [HashTable]$AppServiceFabric = (Import-Clixml "$env:System_DefaultWorkingDirectory\rAppServiceFabric.xml"),
+  [array]$keyvaults = (Import-Clixml "$env:System_DefaultWorkingDirectory\rKeyvaults.xml"),
+  [string]$rgSublevelInfra = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgNameSubLevelInfra.xml"),
+  [string]$PathTools = (Import-Clixml "$env:System_DefaultWorkingDirectory\pathTools.xml"),
+  [Hashtable]$DeploymentOptionalParameters = @{ }
+)
+try {
+  [hashtable] $customParameters = @{
+    ServiceBus = $AppServiceFabric.ServiceBus
+    Keyvault   = @{
+      Name          = $Keyvaults.Name
+      ResourceGroup = $rgSublevelInfra
+    }
+  }
+
+  $deployArmTemplateParams = @{
+    Target                           = $Target
+    ResourceGroupName                = $RgApp.Name
+    ResourceGroupLocation            = $RgApp.Location
+    TemplateFilePath                 = "$PSScriptRoot\ServiceBus.template.json"
+    ParametersFilePath               = "$PSScriptRoot\ServiceBus.parameters.json"
+    CustomParametersForParameterFile = $customParameters
+    DeploymentOptionalParameters     = $DeploymentOptionalParameters
+  }
+
+  if ($WhatIfPreference.isPresent) {
+    Write-Output $deployArmTemplateParams
+  }
+  else {
+    return . $PathTools\0.0.3\Deploy-ArmTemplate.ps1 @deployArmTemplateParams
+  }
+}
+catch {
+  $message = $_.Exception.Message
+  $position = $_.InvocationInfo.PositionMessage.Split('+')[0].Trim()
+  Throw "[$message] [$position]"
+}
