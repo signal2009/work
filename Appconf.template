@@ -1,0 +1,89 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appConfiguration": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        },
+        "apiVersion": {
+            "type": "String"
+        },
+        "sku": {
+            "type": "String"
+        },
+        "tags": {
+            "type": "Object"
+        },
+        "softDeleteRetentionInDays": {
+            "type": "Int"
+        },
+        "enablePurgeProtection": {
+            "type": "Bool"
+        },
+        "disableLocalAuth": {
+            "type": "Bool"
+        },
+        "keyVault": {
+            "type": "object"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.AppConfiguration/configurationStores",
+            "apiVersion": "[parameters('apiVersion')]",
+            "name": "[parameters('appConfiguration')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [],
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "properties": {
+                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                "enablePurgeProtection": "[parameters('enablePurgeProtection')]",
+                "disableLocalAuth": "[parameters('disableLocalAuth')]"
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "[concat('KVSecretUpdate-',parameters('appConfiguration').Name)]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('keyVault').resourceGroup]",
+            "dependson": [
+                "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfiguration').Name)]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {},
+                "variables": {},
+                "resources": [
+                    {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('keyVault').Name[0], '/', 'AppConfiguration-ConnectionString-',parameters('appConfiguration').Name,'-Manage')]",
+                    "apiVersion": "2015-06-01",
+                    "properties": {
+                        "value": "[listKeys(resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfiguration').Name), '2019-11-01').value[0].value]"
+                    }
+                    },
+                    {
+                    "type": "Microsoft.KeyVault/vaults/secrets",
+                    "name": "[concat(parameters('keyVault').Name[1], '/', 'AppConfiguration-ConnectionString-',parameters('appConfiguration').Name,'-Manage')]",
+                    "apiVersion": "2015-06-01",
+                    "properties": {
+                        "value": "[listKeys(resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfiguration').Name), '2019-11-01').value[1].value]"
+                    }
+                    }
+                ]
+            }
+        }
+    }
+    ],
+    "outputs": {}
+}
