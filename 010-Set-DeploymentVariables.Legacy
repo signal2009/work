@@ -2332,6 +2332,17 @@ try {
         Instance = $ResourceGroupAlias
       }
     }
+    AppConfiguration = @{
+      Name       = 'tp', $target, $regionAlias, $rgAliasLowerCase, "appcong" -join '-'
+      SKU        = @{
+        Name     = "Standard"
+        Tier     = "Standard"
+        Capacity = 1
+      }
+      KeyVaultSecretName = @{
+        Primary = 'AppConfiguration-ConnectionString', 'tp', $target, $regionAlias, $rgAliasLowerCase, 'appcong-Manage' -join '-'
+      }
+    }
     ServiceBus           = @{
       Name               = 'tp', $target, $regionAlias, $rgAliasLowerCase, "sbus" -join '-'
       SKU                = @{
@@ -2468,6 +2479,7 @@ try {
     AuthServiceUrl                   = $AuthServiceUrl
     BinTableUrl                      = 'https://', ('tp', $Target, $regionAlias, 'fa-ms-bintable' -join '-'), '.azurewebsites.net/service/bintable/GetBinTableFileCloud' -join ''
     BintableAuth                     = $msBintable.$deployRegion.RfunctionApp.KeyVaultSecretName.DefaultKey
+    AppConfiguration                 = $rAppServiceFabric.AppConfiguration.KeyVaultSecretName.Primary
     ServiceBus                       = $rAppServiceFabric.ServiceBus.KeyVaultSecretName.Primary
     CacheConnection                  = ($rDataRedisServer.$deployRegion | Where-Object { ($_.target -eq $target) -and ($_.Metadata -eq 'triPOSCloud') }).Name, '-PrimaryConnectionString' -join ''
     telemetryEventHubNameSpace       = 'EventHubNameSpace-ConnectionString', ($rLoggingEventHub.$deployRegion.$Target | Where-Object { 'telemetry' -in $_.EventHubs.Name }).Name, 'Root' -join '-'
