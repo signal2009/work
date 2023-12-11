@@ -1,0 +1,138 @@
+<#
+  .SYNOPSIS
+  Test runner for Automated and Manual tests of this script.
+
+  .DESCRIPTION
+  Test runner for Automated and Manual tests of this script.
+
+  .EXAMPLE
+  Inline Script:
+ param (
+    [string]$Path,
+    [string]$FileName,
+    [bool]$Legacy
+
+    )
+    Set-Location $Path
+    Import-Module Pester
+    Invoke-Pester -PassThru -OutputFile "$Path\TEST-$FileName.xml" -OutputFormat NUnitXml -EnableExit -Tag 'Integration' -Script @{
+      Path = ".\$FileName.ps1"
+      Parameters = @{ Legacy = $Legacy }
+      }
+  Script Arguments: -Path "$(System.DefaultWorkingDirectory)\Pipeline\RG\App\" -FileName '250-Deploy-AppConfiguration.Tests' -Legacy $false
+
+  Release Management Inline script
+
+  .EXAMPLE
+  Invoke-Pester -Script @{ Path = ".\Source\Pipeline\RG\App\250-Deploy-AppConfiguration.Tests.ps1";parameters = @{ Legacy = $true }} -Tag Unit
+
+  Run Unit Tests for troubleshooting. This uses the Test-AzResourceGroupDeployment cmdlet instead of New-AzResourceGroupDeployment.
+
+  .EXAMPLE
+  Invoke-Pester -Script @{ Path = ".\Source\Pipeline\RG\App\250-Deploy-AppConfiguration.Tests.ps1";Parameters = @{ Legacy = $true }} -Tag Integration
+
+  Manually deploys the template to simulate TFS. This run the deployment with New-AzResourceGroupDeployment.
+#>
+param(
+  [Parameter(Mandatory = $false)]
+  [Switch]$Legacy
+)
+$runnerScriptName = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
+$runnerScript = "$PSScriptRoot\$runnerScriptName"
+
+if ($legacy) {
+  $setDeploymentVariables = (Resolve-Path -Path "$PSScriptRoot\..\..\010-Set-DeploymentVariables.Legacy.ps1").Path
+  $target = 'Lab'
+}
+else {
+  $setDeploymentVariables = (Resolve-Path -Path "$PSScriptRoot\..\..\010-Set-DeploymentVariables.ps1").Path
+  $target = 'standby'
+}
+if ($null -eq $env:RELEASE_REASON) {
+  # NOT a TFS Release so we need to set some stuff up
+  $env:System_DefaultWorkingDirectory = "TestDrive:\"
+  $setDeploymentVariablesParams = Import-Clixml -Path "$PSScriptRoot\..\..\010-Set-DeploymentVariablesParams.xml"
+  $setDeploymentVariablesParams.Target = $target
+}
+
+Describe -Name $runnerScriptName -Tag 'Unit', 'Integration' -Fixture {
+
+  It 'deploy script should exist' {
+    Get-Item -Path $runnerScript -ErrorAction SilentlyContinue | Should Be $true
+  }
+}
+
+Describe -Name "$runnerScriptName - Unit" -Tag 'Unit' -Fixture {
+  Mock -CommandName Write-Host -MockWith { }
+  Mock -CommandName Add-AzAccount -MockWith { $null }
+
+  It 'set deployment variables should run successfully' {
+    { & $setDeploymentVariables @setDeploymentVariablesParams } | Should -Not -Throw
+  }
+
+  Context "Error Handling" {
+    It 'should throw when an internal error occurs' {
+      Mock Write-Output -MockWith { Throw "Mocked failure." }
+      { & $runnerScript -WhatIf } | Should -Throw "Mocked failure."
+    }
+  }
+
+
+  [string]$pathTools = (Import-Clixml "$env:System_DefaultWorkingDirectory\pathTools.xml")
+
+  # Generate ARM Template deployment parameters
+  [array]$deployArmTemplateParams = & $runnerScript -WhatIf
+
+  It "should generate ARM template deployment parameters" {
+    $deployArmTemplateParams.GetType().BaseType.Name | Should -Be 'array'
+    $deployArmTemplateParams.Count | Should -Be 1
+  }
+
+  foreach ($param in $deployArmTemplateParams) {
+
+    $output = . $pathTools\0.0.3\Deploy-ArmTemplate.ps1 @param -WhatIf
+
+    # Convert HTTP Response output into JSON
+    $result = (($output | Where-Object { $_ -match '^============================ HTTP RESPONSE ============================' }) -split 'Body:')[1] | ConvertFrom-Json
+
+    It "should pass template validation" {
+      $result.error.message | Should -BeNullOrEmpty -Because "[$($result.error.details.message)]"
+      $result.properties.provisioningState | Should -Be 'Succeeded'
+    }
+  }
+}
+
+Describe -Name "$runnerScriptName - Integration" -Tag 'Integration' -Fixture {
+  if ($null -eq $env:RELEASE_REASON) {
+    # NOT a TFS Release so we need to set some stuff up
+    Mock -CommandName Write-Host -MockWith { }
+
+    # set up proxy for Get-AzKeyVaultSecret
+    # [system.net.webrequest]::DefaultWebProxy = new-object system.net.webproxy('http://usproxy.dlb.corp.vantiv.com:8080')
+    # [system.net.webrequest]::DefaultWebProxy.UseDefaultCredentials = $true
+
+    Mock -CommandName Add-AzAccount -MockWith { $null }
+
+    It 'set deployment variables should run successfully' {
+      { & $setDeploymentVariables @setDeploymentVariablesParams } | Should -Not -Throw
+    }
+
+    It 'should deploy the template successfully' {
+      $result = & $runnerScript
+      $result.error.message | Should -BeNullOrEmpty -Because "[$($result.error.additionalInfo.info)]"
+      $result.provisioningState | Should -Be 'Succeeded'
+    }
+  }
+
+  Context 'Validation of deployment' {
+
+    [hashtable]$RgApp = (Import-Clixml "$env:System_DefaultWorkingDirectory\rgApp.xml")
+    [hashtable]$AppServiceFabric = (Import-Clixml "$env:System_DefaultWorkingDirectory\rAppServiceFabric.xml")
+
+    $appconf = Get-AzAppConfigurationStore -ResourceGroupName $RgApp.Name
+    It "AppConfiguration $($appconf.Name) Created Successfully" {
+      $appconf.Name | Should -Be $AppServiceFabric.AppConfiguration.Name
+      $appconf.Location -replace (' ', '') | Should -Be $RgApp.Location
+    }
+  }
+}
