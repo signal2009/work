@@ -1,0 +1,218 @@
+configure git global user's details:
+ ==================================== 
+git config --global user.name "Simon Legah"
+git config --global user.email "legah2000@gmail.com"
+git config --global --list
+
+git commit -m "my first commit"   (an header for our first comit and is going to commit everything we add with git. everything we see under status) 
+git commit -m "db connection" 
+git log 
+
+git push alias branchname (e. git push origin master)
+
+git show (it shows all the files we are pushing)
+git status(shows us the staus of our files if still uncommited)
+
+git branch (to know the branch we are working on e.g master)
+
+git branch -d branchname (delete the branch)
+git checkout -b branchname( create a branch and switch to the branch)
+git branch branchname (create branch)
+
+git tag
+
+to start with git
+
+start with git init
+
+git add even.sh learning.sh pref.sh   (add the multiple files)
+
+
+
+ git add *  
+  git add filename   (Add all files)
+
+
+git remote add origin https://github.com/freefinityinternational/ebay.git    (origin can be an alias. anything to headline)
+
+ [fola@demo githup]$ git remote -v (remote repository we see the stus on how we can fetch and push)
+firsttest       https://github.com/freefinityinternational/ebay (fetch)
+firsttest       https://github.com/freefinityinternational/ebay (push)
+
+user.name=Fola Omolabi
+user.email=folashayoomolabi@gmail.com
+[fola@demo githup]$ git push firsttest master
+Username for 'https://github.com': Fola Omolabi
+Password for 'https://Fola Omolabi@github.com':
+
+
+password is the token we created on git.com
+
+
+ git pull firsttest master ( to pull all the update/changes from central repository)
+
+
+ git diff firsttest master(identify new file that were just created/ somebody edited from github he let you know)
+
+
+
+1st use the the fetch then the diff to get the usual update done on your repository
+
+
+[fola@demo githup]$ git merge firsttest/master( merging all github update files from repository to view in local repo)
+
+
+git clone
+    push
+    pull -- move changes from RemoteRepo to working area
+    fetch -- move changes from RemoteRepo to LocalRepo
+             git merge - to move from localRepo to wa 
+
+to get somebody else code in your repository
+git fetch   e.g git fetch vs master
+git clone   (brin
+git pull (to review a commited code)
+git diff vs/master
+git merge vs/master   (vs/master whats in our remote rep and master branch)
+git push alias branchname
+git push vs --all
+username 
+password:token
+
+git commit -a -m "second commit"   ( a for add (m for message "commit alais")
+
+git switch dev (dev is a branch. we are switching to master branch)
+
+git merge (merge the code in the form the newly created branch to master branch)
+
+when the code is done on github
+
+you dont need git clone
+
+
+git fetch --> It brings changes in the code to the LocalRepo
+  git pull --> It brings changes in the code to the Working area 
+  git clone --> It brings the entire code to the working area 
+
+
+git pull (pull from remote to local and merge immediately)
+git fetch(pull from remote to local doesnot  merge immediately
+git clone (pull everything to local repo but when you kust need the changes, use pull and fetch)
+
+
+git switch branchname (branch we are switching to)
+
+
+every new user needs to authenticate
+
+git config --global user.name "Simon Legah"
+git config --global user.email "legah2000@gmail.com"
+git config --global --list       *****let you know which user are you*********
+
+
+ls -h (human readeable)
+
+ls -i (machine readeable) understand 236474(numbers)
+
+
+https://aws.amazon.com/government-education/sustainability-research-credits/
+
+
+
+Running notes - Git 2b & 3 videos:
+==================================
+ working area        staging     localRepo     RemoteRepo[GitHub]    :
+  -----------        -------      ---------     ------------------  
+  Untracked files     git add     git commit    git push 
+    red                green     
+             
+git fetch                           <-------------------
+git merge    
+git pull <------------------------------------------------------
+ 
+git init          = to initialised a git empty repository
+git status        = to track files location
+git log           
+git add           = move files to staging area from working area
+git commit -m     = move files to the local repository FROM STAGING AREA
+                    good commit message for tracking changes/authors 
+
+git commit -m "users list created"
+git push RemoteRepo master 
+
+https://github.com/landmarkdevops28/tesla 
+CREATE AN AliasName FOR THE Remote-Repo
+git remote add AliasName 
+git remote add tesla https://github.com/landmarkdevops28/tesla
+git remote add tt https://github.com/landmarkdevops28/tesla 
+git remote add ta https://github.com/landmarkdevops28/tesla 
+https://github.com/landmarkdevops28/tesla 
+
+git remote -v  (to view status)
+git push ta master 
+ 
+ git pull ta master
+ git fetch ta master
+
+simon
+   app.py  
+   git pull    
+Paul 
+   app.py and modifies this file    
+
+git diff ta/master 
+
+git merge  ta/master 
+
+BitBucket  ---> scm          = GitHub
+    Bamboo --> CI/CD             = Jenkins 
+    Jira -->  Ticketing tool =
+    Confluence  --> Documentation  
+
+
+
+Running notes - Git 2b & 3 videos: 
+================================== 
+ working area        staging     localRepo     RemoteRepo[GitHub]    : 
+  -----------        -------      ---------     ------------------   
+  Untracked files     git add     git commit    git push  
+    red                green      
+              
+git fetch                           <------------------- 
+git merge     
+git pull <------------------------------------------------------ 
+  
+git init          = to initialised a git empty repository 
+git status        = to track files location 
+git log            
+git add           = move files to staging area from working area 
+git commit -m     = move files to the local repository FROM STAGING AREA 
+                    good commit message for tracking changes/authors  
+ 
+git commit -m "users list created" 
+git push RemoteRepo master  
+ 
+https://github.com/landmarkdevops28/tesla  
+CREATE AN AliasName FOR THE Remote-Repo 
+git remote add AliasName  
+git remote add tesla https://github.com/landmarkdevops28/tesla 
+git remote add tt https://github.com/landmarkdevops28/tesla  
+git remote add ta https://github.com/landmarkdevops28/tesla  
+https://github.com/landmarkdevops28/tesla  
+git remote -v  
+git push ta master  
+  
+ git pull ta master 
+ git fetch ta master 
+ 
+simon 
+   app.py   
+   git pull     
+Paul  
+   app.py and modifies this file     
+ 
+git diff ta/master  
+ 
+git merge  ta/master  
+ 
+ ta/master 
