@@ -1,0 +1,750 @@
+Warning: A secret was passed to "sh" using Groovy String interpolation, which is insecure.
+		 Affected argument(s) used the following variable(s): [token]
+		 See https://jenkins.io/redirect/groovy-string-interpolation for details.
++ export FIS_ARTIFACTORY_TOKEN=****
++ . /home/node/nvm/nvm.sh
++ NVM_SCRIPT_SOURCE=
++ [ -z  ]
++ export NVM_CD_FLAGS=
++ nvm_is_zsh
++ [ -n  ]
++ [ -z /home/node/nvm ]
++ unset NVM_SCRIPT_SOURCE
++ nvm_process_parameters
++ local NVM_AUTO_MODE
++ NVM_AUTO_MODE=use
++ [ 0 -ne 0 ]
++ nvm_auto use
++ local NVM_MODE
++ NVM_MODE=use
++ local VERSION
++ local NVM_CURRENT
++ [ _use = _install ]
++ [ _use = _use ]
++ nvm_ls_current
++ local NVM_LS_CURRENT_NODE_PATH
++ command which node
++ NVM_LS_CURRENT_NODE_PATH=/usr/local/bin/node
++ nvm_version_dir iojs
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=iojs
++ [ -z iojs ]
++ [ iojs = new ]
++ [ _iojs = _iojs ]
++ nvm_echo /home/node/nvm/versions/io.js
++ command printf %s\n /home/node/nvm/versions/io.js
++ nvm_tree_contains_path /home/node/nvm/versions/io.js /usr/local/bin/node
++ local tree
++ tree=/home/node/nvm/versions/io.js
++ local node_path
++ node_path=/usr/local/bin/node
++ [ @/home/node/nvm/versions/io.js@ = @@ ]
++ [ @/usr/local/bin/node@ = @@ ]
++ local previous_pathdir
++ previous_pathdir=/usr/local/bin/node
++ local pathdir
++ dirname /usr/local/bin/node
++ pathdir=/usr/local/bin
++ [ /usr/local/bin !=  ]
++ [ /usr/local/bin != . ]
++ [ /usr/local/bin != / ]
++ [ /usr/local/bin != /home/node/nvm/versions/io.js ]
++ [ /usr/local/bin != /usr/local/bin/node ]
++ previous_pathdir=/usr/local/bin
++ dirname /usr/local/bin
++ pathdir=/usr/local
++ [ /usr/local !=  ]
++ [ /usr/local != . ]
++ [ /usr/local != / ]
++ [ /usr/local != /home/node/nvm/versions/io.js ]
++ [ /usr/local != /usr/local/bin ]
++ previous_pathdir=/usr/local
++ dirname /usr/local
++ pathdir=/usr
++ [ /usr !=  ]
++ [ /usr != . ]
++ [ /usr != / ]
++ [ /usr != /home/node/nvm/versions/io.js ]
++ [ /usr != /usr/local ]
++ previous_pathdir=/usr
++ dirname /usr
++ pathdir=/
++ [ / !=  ]
++ [ / != . ]
++ [ / != / ]
++ [ / = /home/node/nvm/versions/io.js ]
++ nvm_tree_contains_path /home/node/nvm /usr/local/bin/node
++ local tree
++ tree=/home/node/nvm
++ local node_path
++ node_path=/usr/local/bin/node
++ [ @/home/node/nvm@ = @@ ]
++ [ @/usr/local/bin/node@ = @@ ]
++ local previous_pathdir
++ previous_pathdir=/usr/local/bin/node
++ local pathdir
++ dirname /usr/local/bin/node
++ pathdir=/usr/local/bin
++ [ /usr/local/bin !=  ]
++ [ /usr/local/bin != . ]
++ [ /usr/local/bin != / ]
++ [ /usr/local/bin != /home/node/nvm ]
++ [ /usr/local/bin != /usr/local/bin/node ]
++ previous_pathdir=/usr/local/bin
++ dirname /usr/local/bin
++ pathdir=/usr/local
++ [ /usr/local !=  ]
++ [ /usr/local != . ]
++ [ /usr/local != / ]
++ [ /usr/local != /home/node/nvm ]
++ [ /usr/local != /usr/local/bin ]
++ previous_pathdir=/usr/local
++ dirname /usr/local
++ pathdir=/usr
++ [ /usr !=  ]
++ [ /usr != . ]
++ [ /usr != / ]
++ [ /usr != /home/node/nvm ]
++ [ /usr != /usr/local ]
++ previous_pathdir=/usr
++ dirname /usr
++ pathdir=/
++ [ / !=  ]
++ [ / != . ]
++ [ / != / ]
++ [ / = /home/node/nvm ]
++ nvm_echo system
++ command printf %s\n system
++ NVM_CURRENT=system
++ [ _system = _none ]
++ [ _system = _system ]
++ nvm_resolve_local_alias default
++ VERSION=v14.21.3
++ [ -n v14.21.3 ]
++ nvm use --silent v14.21.3
++ [ 3 -lt 1 ]
++ local DEFAULT_IFS
++ nvm_echo t
++ command printf %s\n t
++ command tr t \t
++ DEFAULT_IFS= 	
+
++ [  != xe ]
++ set +e
++ local EXIT_CODE
++ IFS= 	
+ nvm use --silent v14.21.3
++ [ 3 -lt 1 ]
++ local DEFAULT_IFS
++ nvm_echo t
++ command printf %s\n t
++ command tr t \t
++ DEFAULT_IFS= 	
+
++ [ x != x ]
++ [ x != x ]
++ [ -n  ]
++ [  	
+ !=  	
+ ]
++ local i
++ local COMMAND
++ COMMAND=use
++ shift
++ local VERSION
++ local ADDITIONAL_PARAMETERS
++ local PROVIDED_VERSION
++ local NVM_SILENT
++ local NVM_SILENT_ARG
++ local NVM_DELETE_PREFIX
++ NVM_DELETE_PREFIX=0
++ local NVM_LTS
++ local IS_VERSION_FROM_NVMRC
++ IS_VERSION_FROM_NVMRC=0
++ [ 2 -ne 0 ]
++ NVM_SILENT=1
++ NVM_SILENT_ARG=--silent
++ shift
++ [ 1 -ne 0 ]
++ [ -n v14.21.3 ]
++ PROVIDED_VERSION=v14.21.3
++ shift
++ [ 0 -ne 0 ]
++ [ -n  ]
++ [ -z v14.21.3 ]
++ nvm_match_version v14.21.3
++ local NVM_IOJS_PREFIX
++ nvm_iojs_prefix
++ nvm_echo iojs
++ command printf %s\n iojs
++ NVM_IOJS_PREFIX=iojs
++ local PROVIDED_VERSION
++ PROVIDED_VERSION=v14.21.3
++ nvm_version v14.21.3
++ local PATTERN
++ PATTERN=v14.21.3
++ local VERSION
++ [ -z v14.21.3 ]
++ [ v14.21.3 = current ]
++ local NVM_NODE_PREFIX
++ nvm_node_prefix
++ nvm_echo node
++ command printf %s\n node
++ NVM_NODE_PREFIX=node
++ nvm_ls v14.21.3
++ local PATTERN
++ PATTERN=v14.21.3
++ local VERSIONS
++ VERSIONS=
++ [ v14.21.3 = current ]
++ local NVM_IOJS_PREFIX
++ command tail -1
++ nvm_iojs_prefix
++ nvm_echo iojs
++ command printf %s\n iojs
++ NVM_IOJS_PREFIX=iojs
++ local NVM_NODE_PREFIX
++ nvm_node_prefix
++ nvm_echo node
++ command printf %s\n node
++ NVM_NODE_PREFIX=node
++ local NVM_VERSION_DIR_IOJS
++ nvm_version_dir iojs
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=iojs
++ [ -z iojs ]
++ [ iojs = new ]
++ [ _iojs = _iojs ]
++ nvm_echo /home/node/nvm/versions/io.js
++ command printf %s\n /home/node/nvm/versions/io.js
++ NVM_VERSION_DIR_IOJS=/home/node/nvm/versions/io.js
++ local NVM_VERSION_DIR_NEW
++ nvm_version_dir new
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=new
++ [ -z new ]
++ [ new = new ]
++ nvm_echo /home/node/nvm/versions/node
++ command printf %s\n /home/node/nvm/versions/node
++ NVM_VERSION_DIR_NEW=/home/node/nvm/versions/node
++ local NVM_VERSION_DIR_OLD
++ nvm_version_dir old
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=old
++ [ -z old ]
++ [ old = new ]
++ [ _old = _iojs ]
++ [ _old = _old ]
++ nvm_echo /home/node/nvm
++ command printf %s\n /home/node/nvm
++ NVM_VERSION_DIR_OLD=/home/node/nvm
++ nvm_resolve_local_alias v14.21.3
++ [ -z v14.21.3 ]
++ local VERSION
++ local EXIT_CODE
++ nvm_resolve_alias v14.21.3
++ [ -z v14.21.3 ]
++ local PATTERN
++ PATTERN=v14.21.3
++ local ALIAS
++ ALIAS=v14.21.3
++ local ALIAS_TEMP
++ local SEEN_ALIASES
++ SEEN_ALIASES=v14.21.3
++ true
++ nvm_alias v14.21.3
++ nvm_echo
++ command printf %s\n 
++ ALIAS_TEMP=
++ [ -z  ]
++ break
++ [ -n v14.21.3 ]
++ [ _v14.21.3 != _v14.21.3 ]
++ nvm_validate_implicit_alias v14.21.3
++ return 2
++ VERSION=
++ EXIT_CODE=2
++ [ -z  ]
++ return 2
++ nvm_ensure_version_prefix v14.21.3
++ local NVM_VERSION
++ nvm_strip_iojs_prefix v14.21.3
++ local NVM_IOJS_PREFIX
++ + nvm_iojs_prefix
+command sed+  -envm_echo s/^\([0-9]\)/v\1/g iojs
+
++ command printf %s\n iojs
++ NVM_IOJS_PREFIX=iojs
++ [ v14.21.3 = iojs ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ NVM_VERSION=v14.21.3
++ nvm_is_iojs_version v14.21.3
++ return 1
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ PATTERN=v14.21.3
++ [ v14.21.3 = N/A ]
++ local NVM_PATTERN_STARTS_WITH_V
++ NVM_PATTERN_STARTS_WITH_V=true
++ [ true = true ]
++ nvm_num_version_groups v14.21.3
++ local VERSION
++ VERSION=v14.21.3
++ VERSION=14.21.3
++ VERSION=14.21.3
++ [ -z 14.21.3 ]
++ local NVM_NUM_DOTS
++ nvm_echo 14.21.3
++ command printf %s\n 14.21.3
++ command sed -e s/[^\.]//g
++ NVM_NUM_DOTS=..
++ local NVM_NUM_GROUPS
++ NVM_NUM_GROUPS=...
++ nvm_echo 3
++ command printf %s\n 3
++ [ _3 = _3 ]
++ nvm_is_version_installed v14.21.3
++ [ -z v14.21.3 ]
++ local NVM_NODE_BINARY
++ NVM_NODE_BINARY=node
++ nvm_get_os
++ local NVM_UNAME
++ command uname -a
++ NVM_UNAME=Linux launchpad-ui-qh832-tbscn 5.10.192-183.736.amzn2.x86_64 #1 SMP Wed Sep 6 21:15:41 UTC 2023 x86_64 GNU/Linux
++ local NVM_OS
++ NVM_OS=linux
++ nvm_echo linux
++ command printf %s\n linux
++ [ _linux = _win ]
++ nvm_version_path v14.21.3
++ [ -x /home/node/nvm/versions/node/v14.21.3/bin/node ]
++ return 0
++ VERSIONS=v14.21.3
++ [  = true ]
++ [ -z v14.21.3 ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ VERSION=v14.21.3
++ [ -z v14.21.3 ]
++ [ _v14.21.3 = _N/A ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ VERSION=v14.21.3
++ [ -z v14.21.3 ]
++ [ _v14.21.3 = _system ]
++ [ _v14.21.3 = _∞ ]
++ [ v14.21.3 = N/A ]
++ nvm_ensure_version_installed v14.21.3 0
++ local PROVIDED_VERSION
++ PROVIDED_VERSION=v14.21.3
++ local IS_VERSION_FROM_NVMRC
++ IS_VERSION_FROM_NVMRC=0
++ [ v14.21.3 = system ]
++ local LOCAL_VERSION
++ local EXIT_CODE
++ nvm_version v14.21.3
++ local PATTERN
++ PATTERN=v14.21.3
++ local VERSION
++ [ -z v14.21.3 ]
++ [ v14.21.3 = current ]
++ local NVM_NODE_PREFIX
++ nvm_node_prefix
++ nvm_echo node
++ command printf %s\n node
++ NVM_NODE_PREFIX=node
++ nvm_ls v14.21.3
++ local PATTERN
++ PATTERN=v14.21.3
++ local VERSIONS
++ VERSIONS=
++ [ v14.21.3 = current ]
++ local NVM_IOJS_PREFIX
++ command tail -1
++ nvm_iojs_prefix
++ nvm_echo iojs
++ command printf %s\n iojs
++ NVM_IOJS_PREFIX=iojs
++ local NVM_NODE_PREFIX
++ nvm_node_prefix
++ nvm_echo node
++ command printf %s\n node
++ NVM_NODE_PREFIX=node
++ local NVM_VERSION_DIR_IOJS
++ nvm_version_dir iojs
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=iojs
++ [ -z iojs ]
++ [ iojs = new ]
++ [ _iojs = _iojs ]
++ nvm_echo /home/node/nvm/versions/io.js
++ command printf %s\n /home/node/nvm/versions/io.js
++ NVM_VERSION_DIR_IOJS=/home/node/nvm/versions/io.js
++ local NVM_VERSION_DIR_NEW
++ nvm_version_dir new
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=new
++ [ -z new ]
++ [ new = new ]
++ nvm_echo /home/node/nvm/versions/node
++ command printf %s\n /home/node/nvm/versions/node
++ NVM_VERSION_DIR_NEW=/home/node/nvm/versions/node
++ local NVM_VERSION_DIR_OLD
++ nvm_version_dir old
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=old
++ [ -z old ]
++ [ old = new ]
++ [ _old = _iojs ]
++ [ _old = _old ]
++ nvm_echo /home/node/nvm
++ command printf %s\n /home/node/nvm
++ NVM_VERSION_DIR_OLD=/home/node/nvm
++ nvm_resolve_local_alias v14.21.3
++ [ -z v14.21.3 ]
++ local VERSION
++ local EXIT_CODE
++ nvm_resolve_alias v14.21.3
++ [ -z v14.21.3 ]
++ local PATTERN
++ PATTERN=v14.21.3
++ local ALIAS
++ ALIAS=v14.21.3
++ local ALIAS_TEMP
++ local SEEN_ALIASES
++ SEEN_ALIASES=v14.21.3
++ true
++ nvm_alias v14.21.3
++ nvm_echo
++ command printf %s\n 
++ ALIAS_TEMP=
++ [ -z  ]
++ break
++ [ -n v14.21.3 ]
++ [ _v14.21.3 != _v14.21.3 ]
++ nvm_validate_implicit_alias v14.21.3
++ return 2
++ VERSION=
++ EXIT_CODE=2
++ [ -z  ]
++ return 2
++ nvm_ensure_version_prefix v14.21.3
++ local NVM_VERSION
++ nvm_strip_iojs_prefix v14.21.3
++ local NVM_IOJS_PREFIX
++ command sed -e s/^\([0-9]\)/v\1/g
++ nvm_iojs_prefix
++ nvm_echo iojs
++ command printf %s\n iojs
++ NVM_IOJS_PREFIX=iojs
++ [ v14.21.3 = iojs ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ NVM_VERSION=v14.21.3
++ nvm_is_iojs_version v14.21.3
++ return 1
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ PATTERN=v14.21.3
++ [ v14.21.3 = N/A ]
++ local NVM_PATTERN_STARTS_WITH_V
++ NVM_PATTERN_STARTS_WITH_V=true
++ [ true = true ]
++ nvm_num_version_groups v14.21.3
++ local VERSION
++ VERSION=v14.21.3
++ VERSION=14.21.3
++ VERSION=14.21.3
++ [ -z 14.21.3 ]
++ local NVM_NUM_DOTS
++ nvm_echo 14.21.3
++ command printf %s\n 14.21.3
++ command sed -e s/[^\.]//g
++ NVM_NUM_DOTS=..
++ local NVM_NUM_GROUPS
++ NVM_NUM_GROUPS=...
++ nvm_echo 3
++ command printf %s\n 3
++ [ _3 = _3 ]
++ nvm_is_version_installed v14.21.3
++ [ -z v14.21.3 ]
++ local NVM_NODE_BINARY
++ NVM_NODE_BINARY=node
++ nvm_get_os
++ local NVM_UNAME
++ command uname -a
++ NVM_UNAME=Linux launchpad-ui-qh832-tbscn 5.10.192-183.736.amzn2.x86_64 #1 SMP Wed Sep 6 21:15:41 UTC 2023 x86_64 GNU/Linux
++ local NVM_OS
++ NVM_OS=linux
++ nvm_echo linux
++ command printf %s\n linux
++ [ _linux = _win ]
++ nvm_version_path v14.21.3
++ [ -x /home/node/nvm/versions/node/v14.21.3/bin/node ]
++ return 0
++ VERSIONS=v14.21.3
++ [  = true ]
++ [ -z v14.21.3 ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ VERSION=v14.21.3
++ [ -z v14.21.3 ]
++ [ _v14.21.3 = _N/A ]
++ nvm_echo v14.21.3
++ command printf %s\n v14.21.3
++ LOCAL_VERSION=v14.21.3
++ EXIT_CODE=0
++ local NVM_VERSION_DIR
++ [ 0 != 0 ]
++ nvm_is_version_installed v14.21.3
++ [ -z v14.21.3 ]
++ local NVM_NODE_BINARY
++ NVM_NODE_BINARY=node
++ nvm_get_os
++ local NVM_UNAME
++ command uname -a
++ NVM_UNAME=Linux launchpad-ui-qh832-tbscn 5.10.192-183.736.amzn2.x86_64 #1 SMP Wed Sep 6 21:15:41 UTC 2023 x86_64 GNU/Linux
++ local NVM_OS
++ NVM_OS=linux
++ nvm_echo linux
++ command printf %s\n linux
++ [ _linux = _win ]
++ nvm_version_path v14.21.3
++ [ -x /home/node/nvm/versions/node/v14.21.3/bin/node ]
++ return 0
++ local NVM_VERSION_DIR
++ nvm_version_path v14.21.3
++ local VERSION
++ VERSION=v14.21.3
++ [ -z v14.21.3 ]
++ nvm_is_iojs_version v14.21.3
++ return 1
++ nvm_version_greater 0.12.0 v14.21.3
++ command awk BEGIN {
+    if (ARGV[1] == "" || ARGV[2] == "") exit(1)
+    split(ARGV[1], a, /\./);
+    split(ARGV[2], b, /\./);
+    for (i=1; i<=3; i++) {
+      if (a[i] && a[i] !~ /^[0-9]+$/) exit(2);
+      if (b[i] && b[i] !~ /^[0-9]+$/) { exit(0); }
+      if (a[i] < b[i]) exit(3);
+      else if (a[i] > b[i]) exit(0);
+    }
+    exit(4)
+  } 0.12.0 14.21.3
++ nvm_version_dir new
++ local NVM_WHICH_DIR
++ NVM_WHICH_DIR=new
++ [ -z new ]
++ [ new = new ]
++ nvm_echo /home/node/nvm/versions/node
++ command printf %s\n /home/node/nvm/versions/node
++ nvm_echo /home/node/nvm/versions/node/v14.21.3
++ command printf %s\n /home/node/nvm/versions/node/v14.21.3
++ NVM_VERSION_DIR=/home/node/nvm/versions/node/v14.21.3
++ nvm_change_path /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /bin /home/node/nvm/versions/node/v14.21.3
++ [ -z /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ]
++ nvm_echo /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ command printf %s\n /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ nvm_grep -q /home/node/nvm/[^/]*/bin
++ GREP_OPTIONS= command grep -q /home/node/nvm/[^/]*/bin
++ nvm_echo /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ command printf %s\n /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ nvm_grep -q /home/node/nvm/versions/[^/]*/[^/]*/bin
++ GREP_OPTIONS= command grep -q /home/node/nvm/versions/[^/]*/[^/]*/bin
++ nvm_echo /home/node/nvm/versions/node/v14.21.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ command printf %s\n /home/node/nvm/versions/node/v14.21.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ PATH=/home/node/nvm/versions/node/v14.21.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++ nvm_has manpath
++ type manpath
++ export PATH
++ hash -r
++ export NVM_BIN=/home/node/nvm/versions/node/v14.21.3/bin
++ export NVM_INC=/home/node/nvm/versions/node/v14.21.3/include/node
++ [  = true ]
++ local NVM_USE_OUTPUT
++ NVM_USE_OUTPUT=
++ [ 1 -ne 1 ]
++ [ _v14.21.3 != _system ]
++ local NVM_USE_CMD
++ NVM_USE_CMD=nvm use --delete-prefix
++ [ -n v14.21.3 ]
++ NVM_USE_CMD=nvm use --delete-prefix v14.21.3
++ [ 1 -eq 1 ]
++ NVM_USE_CMD=nvm use --delete-prefix v14.21.3 --silent
++ nvm_die_on_prefix 0 nvm use --delete-prefix v14.21.3 --silent /home/node/nvm/versions/node/v14.21.3
++ local NVM_DELETE_PREFIX
++ NVM_DELETE_PREFIX=0
++ local NVM_COMMAND
++ NVM_COMMAND=nvm use --delete-prefix v14.21.3 --silent
++ local NVM_VERSION_DIR
++ NVM_VERSION_DIR=/home/node/nvm/versions/node/v14.21.3
++ [ -z nvm use --delete-prefix v14.21.3 --silent ]
++ [ -z /home/node/nvm/versions/node/v14.21.3 ]
++ [ -n  ]
++ local NVM_OS
++ nvm_get_os
++ local NVM_UNAME
++ command uname -a
++ NVM_UNAME=Linux launchpad-ui-qh832-tbscn 5.10.192-183.736.amzn2.x86_64 #1 SMP Wed Sep 6 21:15:41 UTC 2023 x86_64 GNU/Linux
++ local NVM_OS
++ NVM_OS=linux
++ nvm_echo linux
++ command printf %s\n linux
++ NVM_OS=linux
++ local NVM_NPM_CONFIG_x_PREFIX_ENV
++ command awk BEGIN { for (name in ENVIRON) if (toupper(name) == "NPM_CONFIG_PREFIX") { print name; break } }
++ NVM_NPM_CONFIG_x_PREFIX_ENV=
++ [ -n  ]
++ local NVM_NPM_BUILTIN_NPMRC
++ NVM_NPM_BUILTIN_NPMRC=/home/node/nvm/versions/node/v14.21.3/lib/node_modules/npm/npmrc
++ nvm_npmrc_bad_news_bears /home/node/nvm/versions/node/v14.21.3/lib/node_modules/npm/npmrc
++ local NVM_NPMRC
++ NVM_NPMRC=/home/node/nvm/versions/node/v14.21.3/lib/node_modules/npm/npmrc
++ [ -n /home/node/nvm/versions/node/v14.21.3/lib/node_modules/npm/npmrc ]
++ [ -f /home/node/nvm/versions/node/v14.21.3/lib/node_modules/npm/npmrc ]
++ return 1
++ local NVM_NPM_GLOBAL_NPMRC
++ NVM_NPM_GLOBAL_NPMRC=/home/node/nvm/versions/node/v14.21.3/etc/npmrc
++ nvm_npmrc_bad_news_bears /home/node/nvm/versions/node/v14.21.3/etc/npmrc
++ local NVM_NPMRC
++ NVM_NPMRC=/home/node/nvm/versions/node/v14.21.3/etc/npmrc
++ [ -n /home/node/nvm/versions/node/v14.21.3/etc/npmrc ]
++ [ -f /home/node/nvm/versions/node/v14.21.3/etc/npmrc ]
++ return 1
++ local NVM_NPM_USER_NPMRC
++ NVM_NPM_USER_NPMRC=/home/node/.npmrc
++ nvm_npmrc_bad_news_bears /home/node/.npmrc
++ local NVM_NPMRC
++ NVM_NPMRC=/home/node/.npmrc
++ [ -n /home/node/.npmrc ]
++ [ -f /home/node/.npmrc ]
++ nvm_grep -Ee ^(prefix|globalconfig) *=
++ GREP_OPTIONS= command grep -Ee ^(prefix|globalconfig) *=
++ return 1
++ local NVM_NPM_PROJECT_NPMRC
++ nvm_find_project_dir
++ local path_
++ path_=/home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test
++ [ /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test !=  ]
++ [ /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test != . ]
++ [ ! -f /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/package.json ]
++ nvm_echo /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test
++ command printf %s\n /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test
++ NVM_NPM_PROJECT_NPMRC=/home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/.npmrc
++ nvm_npmrc_bad_news_bears /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/.npmrc
++ local NVM_NPMRC
++ NVM_NPMRC=/home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/.npmrc
++ [ -n /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/.npmrc ]
++ [ -f /home/jenkins/agent/workspace/d-merchant-v2_luigi-jenkins-test/.npmrc ]
++ return 1
++ [ -n  ]
++ EXIT_CODE=0
++ set -e
++ return 0
++ npm ci
+npm ERR! code E401
+npm ERR! Unable to authenticate, need: Basic realm="Artifactory Realm"
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/node/.npm/_logs/2023-12-22T18_27_23_139Z-debug.log
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // script
+Post stage
+[Pipeline] echo
+Build Source stage - Failure
+[Pipeline] withCredentials
+Masking supported pattern matches of $TOKEN
+[Pipeline] {
+[Pipeline] sh
++ git rev-parse HEAD
++ COMMIT_HASH=e8048953b851a5aa2fe2b8770c274e16cc14a531
++ curl -s -o /dev/null -L -X POST -H Accept: application/vnd.github+json -H Authorization: Bearer **** -H X-GitHub-Api-Version: 2022-11-28 https://github.worldpay.com/api/v3/repos/Launchpad-UI/core-consolidated-merchant-v2/statuses/e8048953b851a5aa2fe2b8770c274e16cc14a531 -d {"state":"failure","target_url":"https://cloudbees.luigi.worldpay.io/teams-launchpad/job/launchpad/job/UI/job/core-consolidated-merchant-v2/job/luigi-jenkins-test/1/display/redirect","description":" stage failed","context":"Stage/Build Source"}
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Run scans)
+Stage "Run scans" skipped due to earlier failure(s)
+[Pipeline] parallel
+[Pipeline] { (Branch: Run npm audit)
+[Pipeline] { (Branch: Scan with SonarQube)
+[Pipeline] { (Branch: Checkmarx scan)
+[Pipeline] { (Branch: Blackduck Scan)
+[Pipeline] stage
+[Pipeline] { (Run npm audit)
+[Pipeline] stage
+[Pipeline] { (Scan with SonarQube)
+[Pipeline] stage
+[Pipeline] { (Checkmarx scan)
+[Pipeline] stage
+[Pipeline] { (Blackduck Scan)
+Stage "Run npm audit" skipped due to earlier failure(s)
+[Pipeline] }
+Stage "Scan with SonarQube" skipped due to earlier failure(s)
+[Pipeline] }
+Stage "Checkmarx scan" skipped due to earlier failure(s)
+[Pipeline] }
+Stage "Blackduck Scan" skipped due to earlier failure(s)
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] // stage
+[Pipeline] // stage
+[Pipeline] // stage
+[Pipeline] }
+Failed in branch Run npm audit
+[Pipeline] }
+Failed in branch Scan with SonarQube
+[Pipeline] }
+Failed in branch Checkmarx scan
+[Pipeline] }
+Failed in branch Blackduck Scan
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Publish to Nexus)
+Stage "Publish to Nexus" skipped due to earlier failure(s)
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Publish with Xl Deploy)
+Stage "Publish with Xl Deploy" skipped due to earlier failure(s)
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy to environment)
+Stage "Deploy to environment" skipped due to earlier failure(s)
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+el fin
+[Pipeline] echo
+Build Failed
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // container
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] }
+[Pipeline] // podTemplate
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+
+Could not update commit status, please check if your scan credentials belong to a member of the organization or a collaborator of the repository and repo:status scope is selected
+
+
+GitHub has been notified of this commit’s build result
+
+Finished: FAILURE
