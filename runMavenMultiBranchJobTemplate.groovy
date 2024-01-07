@@ -1,0 +1,467 @@
+def call(Map config = [:]) {
+    String appName = config.appName
+    String teamName = config.teamName
+    String contextRoot = config.contextRoot
+    String deployXmlPath = config.deployXmlPath ?: 'deployit-manifest.xml'
+    Boolean onlyUploadToNexus = config.onlyUploadToNexus ?: false
+    String xldPackageIdSuffix = config.xldPackageIdSuffix
+    
+    String xldEnvironmentId
+    String ghOwner
+    Boolean RUN_XLD_DEPLOY
+    Boolean UPLOAD_ARTIFACTS_NEXUS
+
+
+    // Get all the checkmarx variables
+    String checkmarxProjectName = config.checkmarxProjectName
+    String checkmarxTeamPath = config.checkmarxTeamPath                 // Example: DisputesValueStream\\MerchantDisputes
+
+    // Setting up variables for Blackduck
+    String blackduckProjectName = config.blackduckProjectName
+    String blackduckProjectVersion = config.blackduckProjectVersion
+    String blackduckBuc  =  config.blackduckBuc                         // Probably not needed
+    String blackduckFiles  =  config.blackduckFiles                     // Consider using - 'src'
+    String blackduckUrl = 'https://fis2.app.blackduck.com'
+    String blackduckCredId = config.blackduckCredId
+    String scanMode = 'RAPID'                                           // For all non default branches run RAPID Blackduck Scan
+
+
+    pipeline {
+        agent {
+            kubernetes {
+                label 'kpack'
+                defaultContainer 'kpack'
+                yaml libraryResource('agents/k8s/kpack.yaml')
+            }
+        }
+
+        parameters {
+            choice(
+                    name: 'DEPLOYMENT_ENVIRONMENT',
+                    choices: "dev\n" +
+                            "test\n" +
+                            "load\n" +
+                            "stage\n",
+                    description: 'Which environment to deploy to?')
+            booleanParam(name: 'RELEASE_BUILD', defaultValue: false, description: 'Is this a release build?')
+//             string(
+//                 name: 'CONTEXT_ROOT',
+//                 defaultValue: "${contextRoot}",
+//                 trim: true
+//             )
+
+            booleanParam(name: 'RUN_SONARQUBE_SCAN', defaultValue: true, description: 'Scan code w/ SonarQube')
+            booleanParam(name: 'RUN_CHECKMARX_SCAN', defaultValue: true, description: 'Scan code w/ Checkmarx')
+            booleanParam(name: 'RUN_BLACKDUCK_SCAN', defaultValue: true, description: 'Scan code w/ Black Duck')
+            booleanParam(name: 'RUN_MVN_TESTS', defaultValue: true, description: 'Run Maven Tests')
+
+            booleanParam(name: 'RUN_DEPLOY', defaultValue: false, description: 'Deploy artifacts to XLD')
+            //TODO: debugging nexus remove after complete
+            booleanParam(name: 'UPLOAD_NEXUS', defaultValue: false, description: 'upload to nexus')
+        }
+
+        environment {
+            APP_NAME = "${appName}"
+            BUILD_VERSION = readMavenPom().getVersion()
+            GROUP_ID = readMavenPom().getGroupId()
+            ARTIFACT_ID = readMavenPom().getArtifactId()
+            PACKAGING = readMavenPom().getPackaging()
+            POM_NAME = readMavenPom().getName()
+            XLD_APPLICATION_FOLDER = "${xldPackageIdSuffix}"
+            CONTEXT_ROOT = "${contextRoot}"
+            RUN_DEPLOY = false
+            UPLOAD_NEXUS = false
+            XLD_APP_VERSION = buildXldVersion(env.BUILD_VERSION, env.BUILD_NUMBER, env.BRANCH_NAME, params.RELEASE_BUILD)
+
+        // XLD_ENV_PATH = "Environments/Launchpad/API/Non-Prod/${DEPLOYMENT_ENVIRONMENT}/${DEPLOYMENT_ENVIRONMENT}_API";
+        }
+        stages {
+            stage('Validation and Setup') {
+                steps {
+                    script {
+                        validateTeamName(teamName)
+                        xldEnvironmentId = determineXldEnvironmentId(teamName, params.DEPLOYMENT_ENVIRONMENT)
+
+                        // determine deployment steps
+                        RUN_XLD_DEPLOY = params.RUN_DEPLOY ?: false
+                        UPLOAD_ARTIFACTS_NEXUS = params.UPLOAD_NEXUS ?: false
+
+                        // set the github owner (Github Organizations )
+                        ghOwner = sh(script: "echo ${env.GIT_URL} | sed -E 's|.*/([^/]+)/[^/]+\$|\\1|'", returnStdout: true).trim()
+
+                        // if the current branch is not the default branch do not deploy
+                        // env.BRANCH_IS_PRIMARY = null or true
+                        if (env.BRANCH_IS_PRIMARY || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main') {
+                            scanMode = 'INTELLIGENT'
+                            RUN_XLD_DEPLOY = true
+                            UPLOAD_ARTIFACTS_NEXUS = true
+                            echo "Is this the default integration branch? "
+                        }
+
+                        //parent poms wont be uploaded to XLD
+                        if(onlyUploadToNexus){
+                            RUN_XLD_DEPLOY = false
+                            echo "Are we deploying the parent pom to XLD? -> ${env.RUN_DEPLOY}"
+                        }
+                        // create a report.html file and archive 
+
+                        // initialize Commit Statuses
+                        initializeCommitStatuses(params, ghOwner, env.APP_NAME)
+
+
+                    }
+                }
+
+                post {
+                    success {
+                        echo 'Validation stage - Successful'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Validation',
+                            state: 'success',
+                            description: 'Stage is complete'])
+                    }
+                    unsuccessful {
+                        echo 'Validation stage - Failure'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Validation',
+                            state: 'failure',
+                            description: 'Stage failed'])
+                    }
+                }
+            }
+
+            stage('Build'){
+                steps{
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        echo 'Building source...'
+
+                        script {
+                            configFileProvider([configFile(fileId: 'docet-settings', variable: 'MAVEN_SETTINGS')]) {
+                                if(!params.BUILD_RELEASE){
+                                    println("Building snapshot")
+                                       // sh "mvn install -q -U -Dmaven.test.skip "
+                                        sh "mvn install -q -U -s ${MAVEN_SETTINGS} -Dmaven.test.skip "
+
+                                    stash includes: '*', name: 'builtSources'
+                                // sh "mvn package -q -U -X -s ${MAVEN_SETTINGS} -Dmaven.test.skip -Djavax.xml.accessExternalSchema=all"
+                                } else {
+                                    env.version = pom.version.replaceAll('-SNAPSHOT', '')
+                                // withCredentials([usernamePassword(credentialsId: '2f4ddeb8-397a-4158-898b-65b140fb7a37', passwordVariable: 'SCM_PASSWORD', usernameVariable: 'SCM_USERNAME')]) {
+                                //     sh 'mvn -U -Dusername=${SCM_USERNAME} -Dpassword=${SCM_PASSWORD} -Dresume=false -DuseReleaseProfile=false release:prepare release:perform -DbuildNumber=$BUILD_NUMBER -DrevisionNumber=$SVN_REVISION -X'
+                                // }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                post {
+                    success { echo 'Build stage - Successful'
+                        addCommitStatus([ghOwner: ghOwner,
+                        ghRepo: env.APP_NAME,
+                        context: 'Stage/Build',
+                        state: 'success',
+                        description: 'Stage is complete'])
+                    }
+                    unsuccessful { echo 'Build stage - Failure'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Build',
+                            state: 'failure',
+                            description: 'Stage failed'])
+                    }
+                }
+            }
+
+            stage('Run scans') {
+                parallel {
+                    stage('Run Maven Tests') {
+                        when { expression { params.RUN_MVN_TESTS } }
+                        steps {
+                            catchError (buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
+                                sh 'mvn test '
+                            }
+                        }
+                        post {
+                            success { echo 'Maven Test stage - Successful'
+                                addCommitStatus([ghOwner: ghOwner,
+                                ghRepo: env.APP_NAME,
+                                context: 'Stage/Maven Test',
+                                state: 'success',
+                                description: 'Stage is complete'])
+                            }
+                            unsuccessful { echo 'Maven Test stage - Failure'
+                                addCommitStatus([ghOwner: ghOwner,
+                                    ghRepo: env.APP_NAME,
+                                    context: 'Stage/Maven Test',
+                                    state: 'failure',
+                                    description: 'Stage failed'])
+                            }
+                        }
+                    }
+
+                    stage('Sonar Scan') {
+                        when { expression { params.RUN_SONARQUBE_SCAN == true } }
+                        steps {
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                sonarQubeScan()
+                            }
+                        }
+                        post {
+                            success { echo 'SonarQube Scan stage - Successful'
+                                addCommitStatus([ghOwner: ghOwner,
+                                ghRepo: env.APP_NAME,
+                                context: 'Stage/SonarQube Scan',
+                                state: 'success',
+                                description: 'Stage is complete'])
+                            }
+                            unsuccessful { echo 'SonarQube Scan stage - Failure'
+                                addCommitStatus([ghOwner: ghOwner,
+                                    ghRepo: env.APP_NAME,
+                                    context: 'Stage/SonarQube Scan',
+                                    state: 'failure',
+                                    description: 'Stage failed'])
+                            }
+                        }
+                    }
+
+                    stage('Checkmarx Scan') {
+                        when { expression { params.RUN_CHECKMARX_SCAN } }
+
+                        steps {
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                checkmarxScan([projectName: checkmarxProjectName,
+                                    teamPath: checkmarxTeamPath])
+                            }
+                        // emailext body: 'Please find attached the latest scan PDF report.',
+                        //         attachmentsPattern: 'Checkmarx/Reports/**/*.pdf',
+                        //         recipientProviders: [[$class: 'RequesterRecipientProvider']],
+                        //         subject: "Checkmarx scan PDF report",
+                        //         to: 'collin.stolpa@fisglobal.com'
+                        }
+                        post {
+                            success { echo 'Checkmarx Scan stage - Successful'
+                                addCommitStatus([ghOwner: ghOwner,
+                                ghRepo: env.APP_NAME,
+                                context: 'Stage/Checkmarx Scan',
+                                state: 'success',
+                                description: 'Stage is complete'])
+                            }
+                            unsuccessful { echo 'Checkmarx Scan stage - Failure'
+                                addCommitStatus([ghOwner: ghOwner,
+                                    ghRepo: env.APP_NAME,
+                                    context: 'Stage/Checkmarx Scan',
+                                    state: 'failure',
+                                    description: 'Stage failed'])
+                            }
+                        }
+                    }
+
+                    stage('Blackduck Scan') {
+                        when { expression { params.RUN_BLACKDUCK_SCAN } }
+
+                        steps {
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                blackduckScan([
+                                    version: blackduckProjectVersion,
+                                    projectName: blackduckProjectName,
+                                    files: blackduckFiles,
+                                    url: blackduckUrl,
+                                    credId: blackduckCredId,
+                                    unmap: 'false',
+                                    scanMode: scanMode
+                                ])
+                                checkBlackduckResults([
+                                    scanMode: scanMode
+                                ])
+                            }
+                        }
+                        post {
+                            success { echo 'Blackduck Scan stage - Successful'
+                                addCommitStatus([ghOwner: ghOwner,
+                                ghRepo: env.APP_NAME,
+                                context: 'Stage/Blackduck Scan',
+                                state: 'success',
+                                description: 'Stage is complete'])
+                            // sh """ echo '<font color="green">Successful Blackduck Stage</font></td></tr>' >> ${config.reportFile} """
+                            }
+                            unsuccessful { echo 'Blackduck Scan stage - Failure'
+                                addCommitStatus([ghOwner: ghOwner,
+                                    ghRepo: env.APP_NAME,
+                                    context: 'Stage/Blackduck Scan',
+                                    state: 'failure',
+                                    description: 'Stage failed'])
+                            // sh """ echo '<font color="green">Failed Blackduck stage</font></td></tr>' >> ${config.reportFile} """
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage('Publish to Nexus') {
+                when { expression { UPLOAD_ARTIFACTS_NEXUS } }
+                steps  {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        script {
+
+                            configFileProvider([configFile(fileId: 'docet-settings', variable: 'MAVEN_SETTINGS')]) {
+                                sh 'mvn deploy -e -X -s ${MAVEN_SETTINGS} -DskipTests=true -DuniqueVersion=false'
+                            }
+
+                        }
+                    }
+                }
+                post {
+                    success { echo 'Publish to Nexus stage - Successful'
+                        addCommitStatus([ghOwner: ghOwner,
+                        ghRepo: env.APP_NAME,
+                        context: 'Stage/Publish to Nexus',
+                        state: 'success',
+                        description: 'Stage is complete'])
+                    }
+                    unsuccessful { echo 'Publish to Nexus stage - Failure'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Publish to Nexus',
+                            state: 'failure',
+                            description: 'Stage failed'])
+                    }
+                }
+            }
+
+            stage('Publish with Xl Deploy') {
+                when { expression { RUN_XLD_DEPLOY } }
+                steps {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        script {
+                            publishToXLD(appName, deployXmlPath)
+                        }
+                    }
+                }
+                post {
+                    success { echo 'Publish with XL Deploy stage - Successful'
+                        addCommitStatus([ghOwner: ghOwner,
+                        ghRepo: env.APP_NAME,
+                        context: 'Stage/Publish with XL Deploy',
+                        state: 'success',
+                        description: 'Stage is complete'])
+                    }
+                    unsuccessful { echo 'Publish with XL Deploy stage - Failure'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Publish with XL Deploy',
+                            state: 'failure',
+                            description: 'Stage failed'])
+                    }
+                }
+            }
+
+            stage('Deploy to environment') {
+                when { expression { RUN_XLD_DEPLOY } }
+                steps {
+                    script { 
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            retry(3) {
+                                xldDeploy environmentId: "${xldEnvironmentId}",
+                                    packageId: "Applications/${xldPackageIdSuffix}/${env.XLD_APP_VERSION}",
+                                    serverCredentials: 'xld-uat'
+                            }
+                        }
+                    }
+                }
+
+                post {
+                    success { echo 'Deploy to environment stage - Successful'
+                        addCommitStatus([ghOwner: ghOwner,
+                        ghRepo: env.APP_NAME,
+                        context: 'Stage/Deploy to environment',
+                        state: 'success',
+                        description: 'Stage is complete'])
+                    }
+                    unsuccessful { echo 'Deploy to environment stage - Failure'
+                        addCommitStatus([ghOwner: ghOwner,
+                            ghRepo: env.APP_NAME,
+                            context: 'Stage/Deploy to environment',
+                            state: 'failure',
+                            description: 'Stage failed'])
+                    }
+                }
+            }
+        }
+        post {
+            //TODO: return results/files from stage(s) error(s)
+            always {
+                echo 'Build is el fin'
+            //sendEmailNotification repo: repoName, branch: env.BRANCH_NAME, recipients: recipients, reportFile: REPORT_FILE
+            }
+            success { echo 'Build Succeeded!' }
+            unstable { echo 'Build Unstable!' }
+            unsuccessful { echo 'Build Failed!' }
+        }
+        // TODO: for any branch that is not the main branch in the luigi-shared-library
+        // The options directive is for configuration that applies to the whole job.
+        options {
+            // For example, we'd like to make sure we only keep 10 builds at a time, so
+            // we don't fill up our storage!
+            buildDiscarder(logRotator(numToKeepStr: '10'))
+
+            // And we'd really like to be sure that this build doesn't hang forever, so
+            // let's time it out after an hour.
+            timeout(time: 25, unit: 'MINUTES')
+        }
+    }
+}
+
+static String determineXldEnvironmentId(String teamName, String environment) {
+    if ('enterprise-api'.equals(teamName)) {
+        switch (environment) {
+            case 'none':
+                return ''
+            case 'dev':
+                return 'Environments/docet/prod'
+            case 'test':
+                return 'Environments/docet/prod'
+        }
+    } else if ('frauddispute'.equals(teamName)) {
+        switch (environment) {
+            case 'none':
+                return ''
+            case 'dev':
+                return 'Environments/frauddispute/frauddispute-dev'
+            case 'test':
+                return 'Environments/frauddispute/frauddispute-test'
+        }
+    } else if ('launchpad'.equals(teamName)) {
+        //TODO: when we have configured the proper naming convention for XLD folder structure
+        switch (environment) {
+            case 'none':
+                return ''
+            case 'dev':
+                return 'Environments/launchpad/api/launchpadapi-dev'
+            case 'test':
+                return 'Environments/launchpad/api/launchpadapi-test'
+            case 'cert':
+                return 'Environments/launchpad/api/launchpadapi-cert'
+        }
+    }
+
+    error('Unable to determine XLD environment ID')
+}
+
+static String buildXldVersion(String buildVersion, String buildNumber, String branchName, boolean isReleaseBuild) {
+    if (!isReleaseBuild) {
+        return buildVersion + '-' + branchName + '-' + buildNumber + '-devbuild'
+    } else {
+        return buildVersion + '-' + branchName + '-' + buildNumber + '-release'
+    }
+}
+
+static void validateTeamName(String teamName) {
+    ArrayList<String> validTeamNames = ['enterprise-api', 'frauddispute', 'launchpad']
+
+    if (!validTeamNames.contains(teamName)) {
+        error('Invalid teamName passed. Valid team names: ' + validTeamNames)
+    }
+}
