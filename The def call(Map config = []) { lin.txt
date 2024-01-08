@@ -38,3 +38,24 @@ myPipelineScript([
     environment: "prod"
 ])
 This provides a way to reuse the same pipeline script with different configurations. The exact use of the call method depends on the conventions and requirements of the Jenkins shared library it belongs to.
+
+
+
+
+
+The appName and contextRoot variables are defined to provide configurable parameters for the Jenkins pipeline. These parameters allow for flexibility in the deployment process and make the pipeline script reusable for different applications and contexts. Let's break down their purposes:
+
+appName Variable:
+
+appName represents the name of the application being built and deployed. It is used in various places throughout the pipeline script, such as setting environment variables, defining parameters for scanning tools (Checkmarx, Black Duck), and as part of the XL Deploy package ID.
+contextRoot Variable:
+
+contextRoot represents the context root or path for the application within the deployment environment. It is also used in setting environment variables, defining XL Deploy application folders, and potentially other deployment-related configurations.
+By defining these variables as parameters, you can customize the deployment process for different applications or contexts without modifying the main body of the pipeline script. When calling the runMavenMultiBranchJobTemplate function or the main call function, you can pass different values for appName and contextRoot based on the specific requirements of the application or environment.
+
+For example, if you have multiple applications that follow a similar CI/CD process but have different names or deployment paths, you can reuse the same pipeline script by providing different values for appName and contextRoot. This makes the pipeline script more versatile and adaptable to various projects within the organization.
+
+
+
+
+
