@@ -1,0 +1,477 @@
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">
+  <Obj RefId="0">
+    <TN RefId="0">
+      <T>System.Object[]</T>
+      <T>System.Array</T>
+      <T>System.Object</T>
+    </TN>
+    <LST>
+      <Obj RefId="1">
+        <TN RefId="1">
+          <T>System.Collections.Hashtable</T>
+          <T>System.Object</T>
+        </TN>
+        <DCT>
+          <En>
+            <S N="Key">ForceDeploy</S>
+            <Obj N="Value" RefId="2">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">UAT</S>
+                  <S N="Value">false</S>
+                </En>
+                <En>
+                  <S N="Key">Lab</S>
+                  <S N="Value">false</S>
+                </En>
+                <En>
+                  <S N="Key">QA</S>
+                  <S N="Value">false</S>
+                </En>
+                <En>
+                  <S N="Key">DrTest</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">Actual</S>
+                  <S N="Value">false</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Name</S>
+            <S N="Value">PinPadRegistry</S>
+          </En>
+          <En>
+            <S N="Key">Server</S>
+            <Obj N="Value" RefId="3">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">Primary</S>
+                  <S N="Value">sql-tripos-lab-cwam7rbx6nlve</S>
+                </En>
+                <En>
+                  <S N="Key">GeoReplica02</S>
+                  <S N="Value">tp-lab-uw-sql-02</S>
+                </En>
+                <En>
+                  <S N="Key">GeoReplica01</S>
+                  <S N="Value">sql-tripos-labeastuscwa</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">FailOverGroupName</S>
+            <S N="Value">tp-lab-sql-01</S>
+          </En>
+          <En>
+            <S N="Key">Sku</S>
+            <Obj N="Value" RefId="4">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">Capacity</S>
+                  <Obj N="Value" RefId="5">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <I32 N="Value">200</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <I32 N="Value">10</I32>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <I32 N="Value">20</I32>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <I32 N="Value">800</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <I32 N="Value">1600</I32>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Name</S>
+                  <Obj N="Value" RefId="6">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Tier</S>
+                  <Obj N="Value" RefId="7">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Location</S>
+            <S N="Value">westus</S>
+          </En>
+        </DCT>
+      </Obj>
+      <Obj RefId="8">
+        <TNRef RefId="1" />
+        <DCT>
+          <En>
+            <S N="Key">ForceDeploy</S>
+            <Obj N="Value" RefId="9">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">UAT</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">Lab</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">QA</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">DrTest</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">Actual</S>
+                  <S N="Value">true</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Name</S>
+            <S N="Value">PinPadConnectionHistory</S>
+          </En>
+          <En>
+            <S N="Key">Server</S>
+            <Obj N="Value" RefId="10">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">GeoReplica01</S>
+                  <S N="Value">sql-tripos-labeastuscwa</S>
+                </En>
+                <En>
+                  <S N="Key">Primary</S>
+                  <S N="Value">tp-lab-uw-sql-02</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">FailOverGroupName</S>
+            <S N="Value">tp-lab-sql-02</S>
+          </En>
+          <En>
+            <S N="Key">Sku</S>
+            <Obj N="Value" RefId="11">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">Capacity</S>
+                  <Obj N="Value" RefId="12">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <I32 N="Value">50</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <I32 N="Value">400</I32>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <I32 N="Value">20</I32>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <I32 N="Value">400</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <I32 N="Value">400</I32>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Name</S>
+                  <Obj N="Value" RefId="13">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Tier</S>
+                  <Obj N="Value" RefId="14">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Location</S>
+            <S N="Value">westus</S>
+          </En>
+        </DCT>
+      </Obj>
+      <Obj RefId="15">
+        <TNRef RefId="1" />
+        <DCT>
+          <En>
+            <S N="Key">ForceDeploy</S>
+            <Obj N="Value" RefId="16">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">UAT</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">Lab</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">QA</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">DrTest</S>
+                  <S N="Value">true</S>
+                </En>
+                <En>
+                  <S N="Key">Actual</S>
+                  <S N="Value">true</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Name</S>
+            <S N="Value">LaneConfiguration</S>
+          </En>
+          <En>
+            <S N="Key">Server</S>
+            <Obj N="Value" RefId="17">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">GeoReplica01</S>
+                  <S N="Value">sql-tripos-labeastuscwa</S>
+                </En>
+                <En>
+                  <S N="Key">Primary</S>
+                  <S N="Value">tp-lab-uw-sql-02</S>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">FailOverGroupName</S>
+            <S N="Value">tp-lab-sql-02</S>
+          </En>
+          <En>
+            <S N="Key">Sku</S>
+            <Obj N="Value" RefId="18">
+              <TNRef RefId="1" />
+              <DCT>
+                <En>
+                  <S N="Key">Capacity</S>
+                  <Obj N="Value" RefId="19">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <I32 N="Value">20</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <I32 N="Value">20</I32>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <I32 N="Value">20</I32>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <I32 N="Value">100</I32>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <I32 N="Value">200</I32>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Name</S>
+                  <Obj N="Value" RefId="20">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+                <En>
+                  <S N="Key">Tier</S>
+                  <Obj N="Value" RefId="21">
+                    <TNRef RefId="1" />
+                    <DCT>
+                      <En>
+                        <S N="Key">UAT</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Lab</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">QA</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">DrTest</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                      <En>
+                        <S N="Key">Actual</S>
+                        <S N="Value">Standard</S>
+                      </En>
+                    </DCT>
+                  </Obj>
+                </En>
+              </DCT>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Location</S>
+            <S N="Value">westus</S>
+          </En>
+        </DCT>
+      </Obj>
+    </LST>
+  </Obj>
+</Objs>
