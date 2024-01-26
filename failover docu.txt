@@ -1,0 +1,80 @@
+ServerName = ($RDataSqlServer | Where-Object { $_.Name -eq $RDataSqlServer }).Name
+
+
+ServerName = ($RDataSqlDatabase | Where-Object { $_.Name -eq $DatabaseName }).FailoverGroupName
+
+
+
+$RDataSqlServer
+
+Name                           Value
+----                           -----
+ForceDeploy                    false
+Tags                           {PinPadRegistry}
+Name                           sql-tripos-lab-cwam7rbx6nlve
+Target                         Lab
+Location                       westus
+FailOverGroupName              tp-lab-sql-01
+Target                         Lab
+Tags                           {LaneConfiguration, PinPadConnectionHistory, PinPadRegistry}
+Name                           sql-tripos-labeastuscwa
+Location                       eastus
+ForceDeploy                    false
+ForceDeploy                    false
+Tags                           {PinPadRegistry}
+Name                           sql-tripos-qa-u46p7jz3xbmgm
+Target                         QA
+Location                       westus
+FailOverGroupName              tp-lab-sql-01
+Target                         QA
+Tags                           {LaneConfiguration, PinPadConnectionHistory, PinPadRegistry}
+Name                           sql-tripos-qaeastusu46p
+Location                       eastus
+ForceDeploy                    false
+ForceDeploy                    false
+Tags                           {PinPadRegistry}
+Name                           sql-tripos-uat-iq7pflsziexyy
+Target                         UAT
+Location                       westus
+FailOverGroupName              tp-lab-sql-01
+Target                         UAT
+Tags                           {LaneConfiguration, PinPadConnectionHistory, PinPadRegistry}
+Name                           sql-tripos-uateastusiq7
+Location                       eastus
+ForceDeploy                    false
+ForceDeploy                    false
+Tags                           {PinPadRegistry}
+Name                           sql-tripos-actual-tqsmw44ymfzjc
+Target                         Actual
+Location                       westus
+FailOverGroupName              tp-lab-sql-02
+
+
+
+
+
+$RDataSqlDatabase
+
+Name                           Value
+----                           -----
+Sku                            {Capacity, Name, Tier}
+Server                         {GeoReplica02, Primary, GeoReplica01}
+ForceDeploy                    {QA, Actual, DrTest, Lab...}
+Name                           PinPadRegistry
+Location                       westus
+FailOverGroupName              tp-lab-sql-01
+Sku                            {Capacity, Name, Tier}
+Server                         {GeoReplica01, Primary}
+ForceDeploy                    {QA, Actual, DrTest, Lab...}
+Name                           PinPadConnectionHistory
+Location                       westus
+FailOverGroupName              tp-lab-sql-02
+Sku                            {Capacity, Name, Tier}
+Server                         {GeoReplica01, Primary}
+ForceDeploy                    {QA, Actual, DrTest, Lab...}
+Name                           LaneConfiguration
+Location                       westus
+FailOverGroupName              tp-lab-sql-02
+
+
+
