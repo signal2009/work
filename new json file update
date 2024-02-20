@@ -1,0 +1,41 @@
+{
+    "Statement": [
+        {
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetReplicationConfiguration",
+                "s3:GetObjectVersionTagging",
+                "s3:GetObjectVersionForReplication",
+                "s3:GetObjectVersionAcl",
+                "s3:GetObjectRetention",
+                "s3:GetObjectLegalHold"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::merchantfeed-prod/*",
+                "arn:aws:s3:::merchantfeed-prod"
+            ],
+            "Sid": ""
+        },
+        {
+            "Action": [
+                "s3:ReplicateTags",
+                "s3:ReplicateObject",
+                "s3:ReplicateDelete",
+                "s3:GetObjectVersionTagging"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:s3:::merchantfeed-prod/*",
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-source-arn": [
+                        "arn:aws:s3:::cdl-954530905346-us-fraudsight-all-prod-us-east-1",
+                        "arn:aws:s3:::cdl-954530905346-us-fraudsight-all-prod-us-east-1/*"
+                    ]
+                }
+            },
+            "Sid": ""
+        }
+    ],
+    "Version": "2012-10-17"
+}
