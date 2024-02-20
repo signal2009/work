@@ -1,29 +1,67 @@
+This is what we have 
 {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Sid": "VisualEditor0",
-			"Effect": "Allow",
-			"Action": "s3:ListBucket",
-			"Resource": [
-			    "arn:aws:s3:::sftpdatafeed",
-			    "arn:aws:s3:::merchant-feed"
-			    ]
-		},
-		{
-			"Sid": "VisualEditor1",
-			"Effect": "Allow",
-			"Action": [
-				"s3:PutObject",
-				"s3:GetObjectAcl",
-				"s3:GetObject",
-				"s3:DeleteObjectVersion",
-				"s3:DeleteObject",
-				"s3:PutObjectAcl",
-				"s3:GetObjectVersion"
-			],
-			"Resource": [
-			    "arn:aws:s3:::sftpdatafeed/*",
-			     "arn:aws:s3:::merchant-feed/*"
-		]
+    "Statement": [
+        {
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetReplicationConfiguration",
+                "s3:GetObjectVersionTagging",
+                "s3:GetObjectVersionForReplication",
+                "s3:GetObjectVersionAcl",
+                "s3:GetObjectRetention",
+                "s3:GetObjectLegalHold"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::cdl-954530905346-us-fraudsight-all-prod-us-east-1/*",
+                "arn:aws:s3:::cdl-954530905346-us-fraudsight-all-prod-us-east-1"
+            ],
+            "Sid": ""
+        },
+        {
+            "Action": [
+                "s3:ReplicateTags",
+                "s3:ReplicateObject",
+                "s3:ReplicateDelete",
+                "s3:GetObjectVersionTagging"
+            ],
+            "Condition": {
+                "StringLikeIfExists": {
+                    "s3:x-amz-server-side-encryption": [
+                        "aws:kms",
+                        "AES256"
+                    ],
+                    "s3:x-amz-server-side-encryption-aws-kms-key-id": "arn:aws:kms:us-east-2:124942809580:key/7cccb0fe-32a4-497d-ad37-12451be6e6b5"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:s3:::merchantfeed-prod/*",
+            "Sid": ""
+        },
+        {
+            "Action": "kms:Decrypt",
+            "Condition": {
+                "StringLike": {
+                    "kms:EncryptionContext:aws:s3:arn": "arn:aws:s3:::cdl-954530905346-us-fraudsight-all-prod-us-east-1/*",
+                    "kms:ViaService": "s3.us-east-1.amazonaws.com"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:kms:us-east-1:954530905346:key/d4ffff57-2fa9-46ef-a7f0-3eb0c44dabb4",
+            "Sid": ""
+        },
+        {
+            "Action": "kms:Encrypt",
+            "Condition": {
+                "StringLike": {
+                    "kms:EncryptionContext:aws:s3:arn": "arn:aws:s3:::merchantfeed-prod/*",
+                    "kms:ViaService": "s3.us-east-2.amazonaws.com"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:kms:us-east-2:124942809580:key/7cccb0fe-32a4-497d-ad37-12451be6e6b5",
+            "Sid": ""
+        }
+    ],
+    "Version": "2012-10-17"
 }
