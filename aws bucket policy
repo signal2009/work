@@ -41,3 +41,53 @@
 		}
 	]
 }
+
+
+
+{
+    "Version": "2012-10-17",
+    "Id": "",
+    "Statement": [
+        {
+            "Sid": "Set permissions for objects",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "AROA6D7NS3PVJWDCIFVFC",
+                    "arn:aws:iam::079158889262:role/service-role/s3crr_role_for_cdl-079158889262-us-fraudsight-all-devl-us-east_6"
+                ]
+            },
+            "Action": [
+                "s3:ReplicateObject",
+                "s3:ReplicateDelete",
+                "s3:GetObject"
+            ],
+            "Resource": "arn:aws:s3:::merchant-feed/*"
+        },
+        {
+            "Sid": "Set permissions on bucket",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::079158889262:role/service-role/s3crr_role_for_cdl-079158889262-us-fraudsight-all-devl-us-east_6"
+            },
+            "Action": [
+                "s3:List*",
+                "s3:GetBucketVersioning",
+                "s3:PutBucketVersioning"
+            ],
+            "Resource": "arn:aws:s3:::merchant-feed"
+        },
+        {
+            "Sid": "AllowSSLRequestsOnly",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::merchant-feed/*",
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
+                }
+            }
+        }
+    ]
+}
