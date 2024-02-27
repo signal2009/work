@@ -1,0 +1,138 @@
+{
+	"Version": "2012-10-17",
+	"Id": "",
+	"Statement": [
+		{
+			"Sid": "Set permissions for objects",
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": [
+					"arn:aws:iam::954530905346:role/fraudsight-replication-service-role",
+					"arn:aws:iam::079158889262:role/service-role/s3crr_role_for_cdl-079158889262-us-fraudsight-all-devl-us-east_6",
+					"arn:aws:iam::963479912625:role/fraudsight-replication-service-role",
+					"arn:aws:iam::124942809580:role/Merchant-Feed-Iamrole"
+				]
+			},
+			"Action": [
+				"s3:ReplicateObject",
+				"s3:ReplicateDelete",
+				"s3:GetObject",
+				"s3:GetObjectAcl",
+				"s3:PutObject"
+			],
+			"Resource": "arn:aws:s3:::merchantfeed-prod/*"
+		},
+		{
+			"Sid": "Set permissions on bucket",
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": [
+					"arn:aws:iam::954530905346:role/fraudsight-replication-service-role",
+					"arn:aws:iam::963479912625:role/fraudsight-replication-service-role",
+					"arn:aws:iam::079158889262:role/service-role/s3crr_role_for_cdl-079158889262-us-fraudsight-all-devl-us-east_6"
+				]
+			},
+			"Action": [
+				"s3:List*",
+				"s3:GetBucketVersioning",
+				"s3:PutBucketVersioning"
+			],
+			"Resource": [
+				"arn:aws:s3:::merchantfeed-prod",
+				"arn:aws:s3:::merchantfeed-prod/*"
+			]
+		},
+		{
+			"Sid": "S3PolicyStmt-DO-NOT-MODIFY-1708553808098",
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "arn:aws:iam::954530905346:root"
+			},
+			"Action": [
+				"s3:GetBucketVersioning",
+				"s3:PutBucketVersioning",
+				"s3:ReplicateObject",
+				"s3:ReplicateDelete"
+			],
+			"Resource": [
+				"arn:aws:s3:::merchantfeed-prod",
+				"arn:aws:s3:::merchantfeed-prod/*"
+			]
+		}
+	]
+}
+
+
+{
+    "Version": "2012-10-17",
+    "Id": "key-consolepolicy-3",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::124942809580:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Grant access to CMK manager",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::124942809580:role/Merchant-Feed-Iamrole",
+                    "arn:aws:iam::124942809580:role/sftp-s3",
+                    "arn:aws:iam::954530905346:role/fraudsight-replication-service-role",
+                    "arn:aws:iam::963479912625:role/fraudsight-replication-service-role"
+                ]
+            },
+            "Action": [
+                "kms:Create*",
+                "kms:Describe*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow the use of the CMK",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::124942809580:role/Merchant-Feed-Iamrole",
+                    "arn:aws:iam::124942809580:role/sftp-s3",
+                    "arn:aws:iam::954530905346:role/fraudsight-replication-service-role",
+                    "arn:aws:iam::963479912625:role/fraudsight-replication-service-role"
+                ]
+            },
+            "Action": "kms:Encrypt",
+            "Resource": "*"
+        }
+    ]
+}
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "VisualEditor0",
+			"Effect": "Allow",
+			"Action": "s3:ListBucket",
+			"Resource": "arn:aws:s3:::merchantfeed-prod"
+		},
+		{
+			"Sid": "VisualEditor1",
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObjectAcl",
+				"s3:GetObject",
+				"s3:DeleteObjectVersion",
+				"s3:DeleteObject",
+				"s3:GetObjectVersion"
+			],
+			"Resource": "arn:aws:s3:::merchantfeed-prod/*"
+		}
+	]
+}
+
+
+
