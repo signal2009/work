@@ -1,0 +1,94 @@
+
+---------------------------------------
+Describing Pod comm-hub-settlement-aggregate-api--luigi-jenkins-77c7b7fb9dds7z
+---------------------------------------
+
+
+Name:           comm-hub-settlement-aggregate-api--luigi-jenkins-77c7b7fb9dds7z
+Namespace:      devops-comm-hub
+Priority:       0
+Node:           ip-10-43-228-169.us-east-2.compute.internal/2600:1f16:16e2:d801:2400:58a5:cf4e:b4
+Start Time:     2024-06-30 03:27:30+00:00
+Labels:         app=comm-hub-settlement-aggregate-api--luigi-jenkins, pod-template-hash=77c7b7fb97, 
+Status:         Pending
+IP:             2600:1f16:16e2:d801:bab3::27
+Containers:
+
+                              - comm-hub-settlement-aggregate-api--luigi-jenkins-image:
+                                  Image:          784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild
+                                  Ports:          8082/TCP, 
+                                  State:          waiting: CreateContainerConfigError (secret "comm-hub-settlement-aggregate-api-master-secrets" not found)
+
+                                  Ready:          False
+                                  Restart Count:  0
+                                  Limits:         
+                                  Requests:       
+                                  Environment:    [{'name': 'SERVER_SERVLET_CONTEXT_PATH',
+ 'value': '/comm-hub-settlement-aggregate-api--luigi-jenkins',
+ 'value_from': None}]
+                                  Mounts:
+                                    /etc/kafka/ssl/kafka.client.truststore.jks from ca-kafka-keystore
+/var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-kqghp
+
+
+Conditions:
+
+-  PodReadyToStartContainers: True
+
+-  Initialized: True
+
+-  Ready: False
+
+-  ContainersReady: False
+
+-  PodScheduled: True
+
+Volumes:
+
+- ca-kafka-keystore
+
+- kube-api-access-kqghp
+
+
+Events:
+    [Type - Reason](From) : Message
+    -------------------------------
+
+-   [Warning - PolicyViolation](None): policy require-run-as-nonroot/run-as-non-root fail: validation error: Running as root is not allowed. Either the field spec.securityContext.runAsNonRoot must be set to `true`, or the fields spec.containers[*].securityContext.runAsNonRoot, spec.initContainers[*].securityContext.runAsNonRoot, and spec.ephemeralContainers[*].securityContext.runAsNonRoot must be set to `true`.          . rule run-as-non-root[0] failed at path /spec/securityContext/runAsNonRoot/ rule run-as-non-root[1] failed at path /spec/containers/0/securityContext/ 
+
+-   [Warning - PolicyViolation](None): policy require-requests-limits/validate-resources fail: validation error: CPU and memory resource requests and limits are required. rule validate-resources failed at path /spec/containers/0/resources/limits/ 
+
+-   [Normal - Scheduled](default-scheduler): Successfully assigned devops-comm-hub/comm-hub-settlement-aggregate-api--luigi-jenkins-77c7b7fb9dds7z to ip-10-43-228-169.us-east-2.compute.internal 
+
+-   [Normal - Pulling](kubelet): Pulling image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 500ms (500ms including waiting) 
+
+-   [Warning - Failed](kubelet): Error: secret "comm-hub-settlement-aggregate-api-master-secrets" not found 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 101ms (101ms including waiting) 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 90ms (90ms including waiting) 
+
+-   [Warning - PolicyViolation](None): policy require-requests-limits/validate-resources fail: validation error: CPU and memory resource requests and limits are required. rule validate-resources failed at path /spec/containers/0/resources/limits/ 
+
+-   [Warning - PolicyViolation](None): policy require-run-as-nonroot/run-as-non-root fail: validation error: Running as root is not allowed. Either the field spec.securityContext.runAsNonRoot must be set to `true`, or the fields spec.containers[*].securityContext.runAsNonRoot, spec.initContainers[*].securityContext.runAsNonRoot, and spec.ephemeralContainers[*].securityContext.runAsNonRoot must be set to `true`.          . rule run-as-non-root[0] failed at path /spec/securityContext/runAsNonRoot/ rule run-as-non-root[1] failed at path /spec/containers/0/securityContext/ 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 118ms (118ms including waiting) 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 97ms (97ms including waiting) 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 102ms (102ms including waiting) 
+
+-   [Normal - Pulled](kubelet): Successfully pulled image "784102274315.dkr.ecr.us-east-2.amazonaws.com/service-excellence-mch/comm-hub-settlement-aggregate-api:0-luigi-jenkins-7-devbuild" in 105ms (105ms including waiting) 
+
+
+
+None of the Deployment were at a ready status after reaching the max number of retries. 
+
+[ERROR]: Error while executing script [xld/kubernetes/resource/steps/deployment/create_update_wait.py]: Exception: Max number of retries reached. Please verify if readiness probe check is correct or increase the number 'Readiness Probe Retry' in ci properties... 
+ in <script> at line number 9
+[ERROR]: com.xebialabs.platform.script.jython.JythonException: Error while executing script [xld/kubernetes/resource/steps/deployment/create_update_wait.py]: Exception: Max number of retries reached. Please verify if readiness probe check is correct or increase the number 'Readiness Probe Retry' in ci properties... 
+[ERROR]:  in <script> at line number 9
+[ERROR]: 	at com.xebialabs.platform.script.jython.JythonException$.apply(JythonException.scala:17)
+[ERROR]: 	at com.xebialabs.platform.script.jython.JythonSupport.executeScript(JythonSupport.scala:75)
