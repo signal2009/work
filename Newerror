@@ -19,6 +19,8 @@ spec:
       labels:
         app: comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
     spec:
+      securityContext:
+        runAsNonRoot: true  # Set runAsNonRoot to true
       minReadySeconds: 30 
       volumes:
       - name: ca-kafka-keystore
@@ -31,8 +33,6 @@ spec:
         - name: ca-kafka-keystore
           mountPath: /etc/kafka/ssl/kafka.client.truststore.jks
           readOnly: false
-           
-      
         readinessProbe:
           initialDelaySeconds: 120
           timeoutSeconds: 5
@@ -45,9 +45,12 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8082
+        resources:
           limits:
+            cpu: "500m"    # Limit to 0.5 CPU cores
             memory: 2048Mi
           requests:
+            cpu: "250m"    # Request 0.25 CPU cores
             memory: 256Mi
         env:
         - name: SERVER_SERVLET_CONTEXT_PATH
@@ -55,41 +58,3 @@ spec:
         envFrom:
         - secretRef:
             name: comm-hub-settlement-aggregate-api-secrets
- 
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: service-comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-  labels:
-    app: comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-spec:
-  type: ClusterIP
-  ports:
-    - port: 8082
-  selector:
-    app: comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-
----
-kind: Ingress
-apiVersion: {{ ingressApiVersion }}
-metadata: 
-  name: mds-ms-tls-ingress-comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-  annotations:
-    kubernetes.io/ingress.class: nginx
-spec:
-  tls:
-  - hosts:
-    - {{ externalHostName  }}
-    secretName: mds-ingress-tls-secret
-  rules:
-  - host: {{ externalHostName  }}
-    http:
-      paths:
-      - path: /comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: service-comm-hub-settlement-aggregate-api-${BRANCH_NAME_PLACEHOLDER}
-            port:
-              number: 8082
